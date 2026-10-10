@@ -1,0 +1,89 @@
+@namespace BzCore.Components.Input
+@typeparam TValue
+@inherits BzFieldBase<TValue>
+
+@if (Visible)
+{
+    <div class="@WrapperClass" style="@RootStyle()">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-input__label" for="@Id">
+                @Label
+                @if (Required)
+                {
+                    <span class="bz-input__req" aria-hidden="true">*</span>
+                }
+            </label>
+        }
+
+        <div class="bz-input__field">
+            @if (!string.IsNullOrEmpty(StartIcon))
+            {
+                <i class="@StartIcon bz-input__icon bz-input__icon--start"></i>
+            }
+
+            @if (CurrencySymbol is not null && !CurrencyAfter)
+            {
+                <span class="bz-input__affix">@CurrencySymbol</span>
+            }
+
+            <input @ref="_input"
+                   id="@Id"
+                   name="@EffectiveName"
+                   class="bz-input__el"
+                   placeholder="@Placeholder"
+                   disabled="@IsDisabled"
+                   readonly="@IsReadOnly"
+                   tabindex="@TabIndex"
+                   maxlength="@(MaxLength?.ToString())"
+                   inputmode="@InputModeAttr"
+                   @oninput="OnInputAsync"
+                   @onchange="OnChangeAsync"
+                   @onfocus="@(() => _focused = true)"
+                   @onblur="@(() => _focused = false)"
+                   @attributes="SafeAttributes" />
+
+            @if (CurrencySymbol is not null && CurrencyAfter)
+            {
+                <span class="bz-input__affix">@CurrencySymbol</span>
+            }
+
+            @if (Clearable && !string.IsNullOrEmpty(_display) && !IsDisabled && !IsReadOnly)
+            {
+                <button type="button" class="bz-input__clear" tabindex="-1"
+                        @onclick="ClearAsync" aria-label="Clear">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            }
+
+            @if (!string.IsNullOrEmpty(EndIcon))
+            {
+                <i class="@EndIcon bz-input__icon bz-input__icon--end"></i>
+            }
+        </div>
+
+        @if (HasError)
+        {
+            <div class="bz-input__msg bz-input__msg--error">@ErrorText</div>
+        }
+        else if (!string.IsNullOrEmpty(HelperText))
+        {
+            <div class="bz-input__msg">@HelperText</div>
+        }
+
+        @if (AmountInWords is not null)
+        {
+            <div class="bz-input__words">@AmountInWords</div>
+        }
+    </div>
+}
+
+@code {
+    private string InputModeAttr => (Mode, CharFilter) switch
+    {
+        (BzInputMode.Money, _) => "numeric",
+        (_, BzCharFilter.NumberOnly) => "numeric",
+        (_, BzCharFilter.Decimal) => "decimal",
+        _ => "text"
+    };
+}

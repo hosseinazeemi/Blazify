@@ -1,0 +1,63 @@
+@namespace BzCore.Components.Dialog
+@inherits BzComponentBase
+@using BzCore.Dialog
+@using BzCore.Components.Button
+
+@if (IsOpen)
+{
+    <div class="bz-dialog @Class" id="@Id" @onkeydown="OnKeyDown" tabindex="-1">
+        <div class="bz-dialog__backdrop" @onclick="OnBackdropClick"></div>
+
+        <div class="@BoxClass" style="@RootStyle()" role="dialog" aria-modal="true">
+            @if (ShowHeader)
+            {
+                <div class="bz-dialog__header">
+                    <div class="bz-dialog__title">
+                        @if (HeaderContent is not null)
+                        {
+                            @HeaderContent
+                        }
+                        else
+                        {
+                            @if (!string.IsNullOrEmpty(Icon))
+                            {
+                                <i class="@Icon bz-dialog__icon @IconColorClass"></i>
+                            }
+                            <span>@Title</span>
+                        }
+                    </div>
+                    @if (ShowCloseButton)
+                    {
+                        <button type="button" class="bz-dialog__close" @onclick="Close" aria-label="بستن">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    }
+                </div>
+            }
+
+            <div class="bz-dialog__body">
+                @ChildContent
+            </div>
+
+            @if (FooterContent is not null)
+            {
+                <div class="bz-dialog__footer">@FooterContent</div>
+            }
+            else if (Buttons is { Count: > 0 })
+            {
+                <div class="bz-dialog__footer">
+                    @foreach (var btn in Buttons)
+                    {
+                        <BzButton Text="@btn.Text"
+                                   StartIcon="@btn.Icon"
+                                   Color="btn.Color"
+                                   Variant="btn.Variant"
+                                   Loading="IsButtonBusy(btn)"
+                                   AutoLoadingOnClick="false"
+                                   OnClick="@(() => ClickButtonAsync(btn))" />
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}

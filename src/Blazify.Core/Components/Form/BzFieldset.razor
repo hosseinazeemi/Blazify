@@ -1,0 +1,60 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <div class="bz-fieldset bz-fieldset--@(Variant.ToString().ToLowerInvariant()) bz-fieldset--@(Color.ToString().ToLowerInvariant()) @(_open ? "" : "is-collapsed") @Class"
+         style="@RootStyle()" id="@Id">
+        <div class="bz-fieldset__head" @onclick="ToggleAsync" role="@(Collapsible ? "button" : null)"
+             tabindex="@(Collapsible ? 0 : null)" aria-expanded="@(!Collapsed)"
+             @onkeydown="OnHeaderKeyDown">
+            @if (!string.IsNullOrEmpty(Icon))
+            {
+                <i class="bz-fieldset__icon @Icon"></i>
+            }
+            <span class="bz-fieldset__title">@Title</span>
+            @if (Collapsible)
+            {
+                <i class="bz-fieldset__chevron fa-solid fa-chevron-down"></i>
+            }
+        </div>
+        <div class="bz-fieldset__body">
+            @if (!string.IsNullOrEmpty(Description))
+            {
+                <p class="bz-fieldset__desc">@Description</p>
+            }
+            @ChildContent
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public BzFieldsetVariant Variant { get; set; } = BzFieldsetVariant.Legend;
+    [Parameter] public BzColor Color { get; set; } = BzColor.Primary;
+    [Parameter] public bool Collapsible { get; set; }
+    [Parameter] public bool Collapsed { get; set; }
+    [Parameter] public EventCallback<bool> CollapsedChanged { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool _open = true;
+
+    protected override void OnParametersSet() => _open = !Collapsed;
+
+    private async Task ToggleAsync()
+    {
+        if (!Collapsible) return;
+        _open = !_open;
+        Collapsed = !_open;
+        if (CollapsedChanged.HasDelegate)
+            await CollapsedChanged.InvokeAsync(Collapsed);
+    }
+
+    private async Task OnHeaderKeyDown(KeyboardEventArgs args)
+    {
+        if (Collapsible && (args.Key is "Enter" or " "))
+            await ToggleAsync();
+    }
+}

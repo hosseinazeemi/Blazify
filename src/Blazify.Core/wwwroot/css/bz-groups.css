@@ -1,0 +1,65 @@
+/* ====================  BzButtonGroup  ==================== */
+.bz-btn-group { display: inline-flex; font-family: var(--bz-font-family); }
+.bz-btn-group--vertical { flex-direction: column; }
+
+/* Attached: merge children (free-composed bz-btn or toggles) */
+.bz-btn-group--attached { gap: 0; }
+.bz-btn-group--attached.bz-btn-group--horizontal > :not(:first-child) { border-start-start-radius: 0; border-end-start-radius: 0; }
+.bz-btn-group--attached.bz-btn-group--horizontal > :not(:last-child) { border-start-end-radius: 0; border-end-end-radius: 0; margin-inline-end: -1px; }
+.bz-btn-group--attached.bz-btn-group--vertical > :not(:first-child) { border-start-start-radius: 0; border-start-end-radius: 0; }
+.bz-btn-group--attached.bz-btn-group--vertical > :not(:last-child) { border-end-start-radius: 0; border-end-end-radius: 0; margin-bottom: -1px; }
+
+/* Separated */
+.bz-btn-group--separated { gap: .5rem; }
+/* Pills: rounded ends only */
+.bz-btn-group--pills { gap: 0; }
+.bz-btn-group--pills > :first-child { border-start-start-radius: 999px; border-end-start-radius: 999px; }
+.bz-btn-group--pills > :last-child { border-start-end-radius: 999px; border-end-end-radius: 999px; }
+.bz-btn-group--pills > :not(:last-child) { margin-inline-end: -1px; }
+/* Outlined */
+.bz-btn-group--outlined { gap: 0; padding: 3px; border: 1px solid var(--bz-border); border-radius: 999px; }
+
+/* toggle buttons (self-contained) */
+.bz-btn-group__toggle {
+    display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+    border: 1px solid var(--bz-border); background: var(--bz-surface); color: var(--bz-text);
+    font-family: inherit; font-weight: 600; cursor: pointer; padding: .5rem 1rem; font-size: 14px;
+    border-radius: var(--bz-radius); transition: all var(--bz-transition-fast); white-space: nowrap;
+}
+.bz-btn-group__toggle--small { padding: .35rem .7rem; font-size: 12.5px; }
+.bz-btn-group__toggle--large { padding: .7rem 1.3rem; font-size: 15px; }
+.bz-btn-group__toggle:hover:not(:disabled):not(.is-active) { background: var(--bz-surface-muted); }
+.bz-btn-group__toggle.is-active { background: var(--bz-primary); color: var(--bz-on-primary); border-color: var(--bz-primary); z-index: 1; }
+.bz-btn-group__toggle:disabled { opacity: .5; cursor: not-allowed; }
+.bz-btn-group--outlined .bz-btn-group__toggle { border: none; background: transparent; }
+.bz-btn-group--outlined .bz-btn-group__toggle.is-active { border-radius: 999px; }
+.bz-btn-group--toggle .bz-btn-group__toggle:not(:last-child) { margin-inline-end: -1px; }
+.bz-btn-group--toggle .bz-btn-group__toggle:first-child { border-start-start-radius: var(--bz-radius); border-end-start-radius: var(--bz-radius); }
+
+/* ====================  BzInputGroup  ==================== */
+.bz-ig { display: flex; align-items: stretch; width: 100%; font-family: var(--bz-font-family); border-radius: var(--bz-radius); }
+.bz-ig__control { flex: 1 1 auto; min-width: 0; display: flex; }
+.bz-ig__control > * { width: 100%; }
+.bz-ig__addon {
+    display: inline-flex; align-items: center; gap: .4rem; padding: 0 .85rem; white-space: nowrap;
+    background: var(--bz-surface-muted); color: var(--bz-text-muted); font-size: 13.5px;
+    border: 1px solid var(--bz-border);
+}
+.bz-ig__addon--start { border-start-start-radius: var(--bz-radius); border-end-start-radius: var(--bz-radius); border-inline-end: none; }
+.bz-ig__addon--end { border-start-end-radius: var(--bz-radius); border-end-end-radius: var(--bz-radius); border-inline-start: none; }
+
+/* flatten the inner control's field so it merges with addons.
+   target BzInput's field + native controls. */
+.bz-ig__control :where(.bz-input__field, input, select, .bz-btn) { border-radius: 0 !important; }
+.bz-ig .bz-input { margin: 0; }
+.bz-ig .bz-input__field { border-radius: 0; }
+.bz-ig:not(:has(.bz-ig__addon--start)) .bz-ig__control :where(.bz-input__field, input, select) { border-start-start-radius: var(--bz-radius) !important; border-end-start-radius: var(--bz-radius) !important; }
+.bz-ig:not(:has(.bz-ig__addon--end)) .bz-ig__control :where(.bz-input__field, input, select) { border-start-end-radius: var(--bz-radius) !important; border-end-end-radius: var(--bz-radius) !important; }
+
+/* variants */
+.bz-ig--filled .bz-ig__addon { background: var(--bz-primary); color: var(--bz-on-primary); border-color: var(--bz-primary); }
+.bz-ig--outlined .bz-ig__addon { background: transparent; }
+.bz-ig--rounded { border-radius: 999px; overflow: hidden; }
+.bz-ig--rounded .bz-ig__addon--start { border-start-start-radius: 999px; border-end-start-radius: 999px; }
+.bz-ig--rounded .bz-ig__addon--end { border-start-end-radius: 999px; border-end-end-radius: 999px; }
+.bz-ig--seamless .bz-ig__addon { background: var(--bz-surface); }

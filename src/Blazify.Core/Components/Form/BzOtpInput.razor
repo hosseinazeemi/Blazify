@@ -1,0 +1,44 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+@inject IJSRuntime JS
+
+@if (Visible)
+{
+    <div class="bz-otp @Class" style="@RootStyle()" id="@Id" dir="ltr">
+        @for (int i = 0; i < Length; i++)
+        {
+            var idx = i;
+            <input class="bz-otp__cell" id="@($"{_uid}-otp-{idx}")" maxlength="1" inputmode="numeric"
+                   value="@(idx < _chars.Length ? _chars[idx].ToString() : "")"
+                   @oninput="@(e => OnInput(idx, e))" />
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public int Length { get; set; } = 5;
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    private char[] _chars = Array.Empty<char>();
+    private readonly string _uid = "otp" + Guid.NewGuid().ToString("N")[..8];
+
+    protected override void OnParametersSet()
+        => _chars = (Value ?? "").ToCharArray();
+
+    async Task OnInput(int idx, ChangeEventArgs e)
+    {
+        var s = e.Value?.ToString() ?? "";
+        var ch = s.Length > 0 ? s[^1] : '\0';
+        var arr = new char[Length];
+        var cur = (Value ?? "").PadRight(Length).ToCharArray();
+        Array.Copy(cur, arr, Length);
+        arr[idx] = char.IsDigit(ch) ? ch : ' ';
+        Value = new string(arr).Replace(" ", "");
+        _chars = new string(arr).TrimEnd().ToCharArray();
+        if (ValueChanged.HasDelegate) await ValueChanged.InvokeAsync(Value);
+
+        if (char.IsDigit(ch) && idx < Length - 1)
+            await JS.InvokeVoidAsync("bzFocusById", $"{_uid}-otp-{idx + 1}");
+    }
+}

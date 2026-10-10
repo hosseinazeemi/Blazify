@@ -1,0 +1,99 @@
+@namespace BzCore.Routing
+@implements IDisposable
+@inject NavigationManager Nav
+@using Microsoft.AspNetCore.Components.Routing
+@using BzCore.Components.Dialog
+@using BzCore.Components.Button
+@using BzCore.Enums
+@using System.Globalization
+
+@* Blocks in-app navigation while there are unsaved changes.
+
+   Blazor ships <NavigationLock>, but it can only raise the browser's native
+   confirm() — a dialog you cannot style, translate or make RTL. This uses the
+   library's own BzDialog instead, so the prompt matches the rest of the app,
+   and it still falls back to the browser dialog for real page unloads (closing
+   the tab), which is the one case the browser will not let us style. *@
+
+<NavigationLock ConfirmExternalNavigation="@Enabled" OnBeforeInternalNavigation="OnBeforeInternal" />
+
+<BzDialog @bind-Open="_ask"
+          Title="@(Title ?? (IsFa ? "تغییرات ذخیره نشده" : "Unsaved changes"))"
+          Icon="fa-solid fa-triangle-exclamation"
+          Size="BzDialogSize.Small">
+    <ChildContent>
+        <p>@(Message ?? (IsFa
+            ? "تغییراتی دارید که ذخیره نشده اند. اگر خارج شوید از بین می روند."
+            : "You have unsaved changes. Leaving this page will discard them."))</p>
+    </ChildContent>
+    <FooterContent>
+        <BzButton Variant="BzButtonVariant.Text"
+                  Text="@(StayText ?? (IsFa ? "بمان" : "Stay"))"
+                  OnClick="Stay" />
+        <BzButton Color="BzColor.Danger"
+                  Text="@(LeaveText ?? (IsFa ? "خارج شو" : "Leave"))"
+                  OnClick="Leave" />
+    </FooterContent>
+</BzDialog>
+
+@code {
+    /// <summary>Turn the lock on — usually bound to "the form is dirty".</summary>
+    [Parameter] public bool Enabled { get; set; }
+
+    /// <summary>Dialog title. A localized default is used when null.</summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>Dialog body. A localized default is used when null.</summary>
+    [Parameter] public string? Message { get; set; }
+
+    /// <summary>Label of the cancel button.</summary>
+    [Parameter] public string? StayText { get; set; }
+
+    /// <summary>Label of the confirm button.</summary>
+    [Parameter] public string? LeaveText { get; set; }
+
+    /// <summary>Raised when the user chooses to leave anyway.</summary>
+    [Parameter] public EventCallback OnLeave { get; set; }
+
+    /// <summary>Raised when the user decides to stay.</summary>
+    [Parameter] public EventCallback OnStay { get; set; }
+
+    private bool _ask;
+    private string? _pendingUri;
+
+    private static bool IsFa => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName
+        .Equals("fa", StringComparison.OrdinalIgnoreCase);
+
+    private void OnBeforeInternal(LocationChangingContext context)
+    {
+        if (!Enabled) return;
+
+        // Hold the navigation, ask, and replay it only if the user agrees.
+        context.PreventNavigation();
+        _pendingUri = context.TargetLocation;
+        _ask = true;
+        StateHasChanged();
+    }
+
+    private async Task Leave()
+    {
+        _ask = false;
+        var target = _pendingUri;
+        _pendingUri = null;
+
+        // The caller clears its dirty flag here, which lets the replayed
+        // navigation through instead of re-triggering this lock.
+        if (OnLeave.HasDelegate) await OnLeave.InvokeAsync();
+
+        if (target is not null) Nav.NavigateTo(target);
+    }
+
+    private async Task Stay()
+    {
+        _ask = false;
+        _pendingUri = null;
+        if (OnStay.HasDelegate) await OnStay.InvokeAsync();
+    }
+
+    public void Dispose() { }
+}

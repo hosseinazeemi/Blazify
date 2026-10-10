@@ -1,0 +1,24 @@
+@namespace BzCore.Components.Display
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <span class="@RootClass" style="@BoxStyle @RootStyle()" id="@Id"></span>
+}
+
+@code {
+    /// <summary>0-100% || 0-max PX</summary>
+    [Parameter] public string Width { get; set; } = "100%";
+
+    /// <summary>Height 0 ta max (px,rem,...)</summary>
+    [Parameter] public string Height { get; set; } = "1rem";
+
+    [Parameter] public string Radius { get; set; } = "8px";
+
+    [Parameter] public bool Circle { get; set; }
+
+    private string RootClass => $"bz-skel {(Circle ? "bz-skel--circle" : "")} {Class}";
+
+    private string BoxStyle =>
+        $"width:{Width};height:{Height};{(Circle ? "" : $"border-radius:{Radius};")}";
+}

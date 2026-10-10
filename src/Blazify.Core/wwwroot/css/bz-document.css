@@ -1,0 +1,428 @@
+/* ==========================================================================
+   BzDocument — a paper-accurate preview on screen, and print output that
+   matches it. Pure CSS; the component itself ships no JavaScript.
+
+   Geometry (paper size, margins, zoom) is generated per-instance in C# and
+   rendered inline, so the preview and the @page rule are driven by the same
+   numbers and cannot drift apart.
+   ========================================================================== */
+
+.bz-doc {
+    font-family: var(--bz-font-family);
+    color: var(--bz-text);
+    display: block;
+}
+
+/* --------------------------------------------------------------------------
+   Toolbar (screen only)
+   -------------------------------------------------------------------------- */
+.bz-doc__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+    padding: .5rem .6rem;
+    background: var(--bz-surface);
+    border: 1px solid var(--bz-border);
+    border-radius: var(--bz-radius, 10px);
+    margin-bottom: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 20; /* above the backdrop, so its dropdowns stay clickable */
+}
+
+.bz-doc__group {
+    display: flex;
+    align-items: center;
+    gap: .15rem;
+    padding-inline: .35rem;
+    border-inline-start: 1px solid var(--bz-border);
+}
+
+    .bz-doc__group:first-child {
+        border-inline-start: 0;
+        padding-inline-start: 0;
+    }
+
+.bz-doc__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 .6rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--bz-text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    justify-content: center;
+    transition: all var(--bz-transition, 150ms);
+}
+
+    .bz-doc__btn:hover {
+        background: color-mix(in srgb, var(--bz-primary) 10%, transparent);
+        color: var(--bz-primary);
+    }
+
+    .bz-doc__btn.is-active {
+        background: color-mix(in srgb, var(--bz-primary) 15%, transparent);
+        color: var(--bz-primary);
+    }
+
+.bz-doc__btn--primary {
+    background: var(--bz-primary);
+    color: #fff;
+    border-color: var(--bz-primary);
+}
+
+    .bz-doc__btn--primary:hover {
+        background: var(--bz-primary);
+        color: #fff;
+        filter: brightness(1.08);
+    }
+
+.bz-doc__rot {
+    transform: rotate(90deg);
+}
+
+.bz-doc__caret {
+    font-size: 9px;
+    opacity: .55;
+}
+
+.bz-doc__zoom {
+    min-width: 48px;
+    height: 28px;
+    border: 1px solid var(--bz-border);
+    border-radius: 999px;
+    background: var(--bz-surface-muted, #f1f5f9);
+    color: var(--bz-text);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+}
+
+    .bz-doc__zoom:hover {
+        border-color: var(--bz-primary);
+        color: var(--bz-primary);
+    }
+
+.bz-doc__file {
+    margin-inline-start: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .25rem .6rem;
+    border-radius: 999px;
+    background: var(--bz-surface-muted, #f1f5f9);
+    color: var(--bz-text-muted, #64748b);
+    font-size: 11px;
+    font-weight: 700;
+    direction: ltr;
+}
+
+/* dropdowns */
+.bz-doc__dd {
+    position: relative;
+}
+
+.bz-doc__backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 15; /* above the page, below the toolbar (20) so menus stay live */
+}
+
+.bz-doc__menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    inset-inline-start: 0;
+    z-index: 10;
+    min-width: 150px;
+    padding: .3rem;
+    background: var(--bz-surface);
+    border: 1px solid var(--bz-border);
+    border-radius: var(--bz-radius, 10px);
+    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, .22);
+}
+
+.bz-doc__mi {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
+    width: 100%;
+    padding: .4rem .55rem;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--bz-text);
+    font: inherit;
+    font-size: 13px;
+    text-align: start;
+    cursor: pointer;
+}
+
+    .bz-doc__mi:hover {
+        background: var(--bz-surface-muted, #f1f5f9);
+    }
+
+    .bz-doc__mi.is-active {
+        background: color-mix(in srgb, var(--bz-primary) 14%, transparent);
+        color: var(--bz-primary);
+    }
+
+    .bz-doc__mi small {
+        opacity: .6;
+        font-size: 10px;
+        direction: ltr;
+    }
+
+/* --------------------------------------------------------------------------
+   Stage + paper (screen)
+   -------------------------------------------------------------------------- */
+.bz-doc__stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.4rem;
+    padding: 1.6rem 1rem;
+    background: var(--bz-surface-muted, #e9edf3);
+    border-radius: var(--bz-radius, 10px);
+    overflow: auto;
+}
+
+.bz-doc__paper {
+    position: relative;
+    box-sizing: border-box;
+    background: #fff;
+    color: #111827;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .1), 0 12px 32px -8px rgba(0, 0, 0, .22);
+    flex: none;
+}
+
+.bz-doc__paper--cover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bz-doc__cover-body {
+    width: 100%;
+}
+
+.bz-doc__content {
+    position: relative;
+    z-index: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Watermark
+   -------------------------------------------------------------------------- */
+.bz-doc__watermark {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+    .bz-doc__watermark span {
+        font-size: clamp(3rem, 14vw, 8rem);
+        font-weight: 900;
+        letter-spacing: .08em;
+        color: #000;
+        transform: rotate(-38deg);
+        white-space: nowrap;
+        user-select: none;
+    }
+
+/* --------------------------------------------------------------------------
+   Running header / footer
+   -------------------------------------------------------------------------- */
+.bz-doc__running {
+    position: relative;
+    z-index: 1;
+    font-size: .85em;
+    color: #4b5563;
+}
+
+.bz-doc__running--top {
+    padding-bottom: .6em;
+    margin-bottom: 1em;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.bz-doc__running--bottom {
+    padding-top: .6em;
+    margin-top: 1em;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* --------------------------------------------------------------------------
+   Authoring helpers, usable from the document body
+   -------------------------------------------------------------------------- */
+
+/* Force a new sheet. */
+.bz-page-break {
+    break-after: page;
+    page-break-after: always;
+    height: 0;
+}
+
+.bz-page-break-before {
+    break-before: page;
+    page-break-before: always;
+}
+
+/* Never split this block across two sheets. */
+.bz-keep-together {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+/* Table headers repeat on every sheet on their own — this is the one repetition
+   the print engines agree on, so lean on it for long tables. */
+.bz-doc thead {
+    display: table-header-group;
+}
+
+.bz-doc tfoot {
+    display: table-footer-group;
+}
+
+.bz-doc tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+/* --------------------------------------------------------------------------
+   Print
+   -------------------------------------------------------------------------- */
+@media print {
+
+    /* Nothing on the page except the document. */
+    body * {
+        visibility: hidden !important;
+    }
+
+    .bz-doc, .bz-doc * {
+        visibility: visible !important;
+    }
+
+    .bz-doc {
+        position: absolute !important;
+        inset-inline-start: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    /* Chrome, and printers, drop background colours unless told otherwise —
+       without this a designed invoice prints as plain text. */
+    .bz-doc--exact-color,
+    .bz-doc--exact-color * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Screen-only chrome. */
+    .bz-doc__toolbar,
+    .bz-doc__backdrop,
+    .bz-doc__menu {
+        display: none !important;
+    }
+
+    /* The stage is scaffolding for the preview; @page owns the real geometry. */
+    .bz-doc__stage {
+        display: block !important;
+        padding: 0 !important;
+        gap: 0 !important;
+        background: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+        zoom: 1 !important;
+    }
+
+    .bz-doc__paper {
+        width: auto !important;
+        min-height: 0 !important;
+        padding: 0 !important; /* @page margin handles this */
+        margin: 0 !important;
+        box-shadow: none !important;
+        background: #fff !important;
+    }
+
+    .bz-doc__paper--cover {
+        display: block !important;
+        break-after: page;
+        page-break-after: always;
+        min-height: 96vh !important;
+    }
+
+    /* position:fixed is how a running header repeats on every sheet. Firefox and
+       recent Chromium honour it; older engines print it on the first sheet only.
+       For guaranteed repetition on every page, put the content in a <thead>. */
+    .bz-doc__running--top {
+        position: fixed;
+        top: 0;
+        inset-inline: 0;
+    }
+
+    .bz-doc__running--bottom {
+        position: fixed;
+        bottom: 0;
+        inset-inline: 0;
+    }
+
+    .bz-doc__watermark {
+        position: fixed;
+        inset: 0;
+    }
+
+    /* Keep links readable on paper. */
+    .bz-doc a {
+        color: inherit;
+        text-decoration: underline;
+    }
+
+    /* Widow/orphan control — the difference between a document and a printout. */
+    .bz-doc p, .bz-doc li {
+        orphans: 3;
+        widows: 3;
+    }
+
+    .bz-doc h1, .bz-doc h2, .bz-doc h3, .bz-doc h4 {
+        break-after: avoid;
+        page-break-after: avoid;
+    }
+
+    .bz-doc img, .bz-doc figure, .bz-doc table {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive: the paper cannot shrink, so let the stage scroll.
+   -------------------------------------------------------------------------- */
+@media (max-width: 860px) {
+    .bz-doc__stage {
+        align-items: flex-start;
+        padding: 1rem .5rem;
+    }
+
+    .bz-doc__file {
+        display: none;
+    }
+}

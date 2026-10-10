@@ -1,0 +1,34 @@
+@namespace BzCore.Components.Dialog
+@inherits ComponentBase
+@implements IDisposable
+@using BzCore.Dialog
+@inject IBzDialogService DialogService
+
+@foreach (var dialog in DialogService.Dialogs)
+{
+    <BzDialog @key="dialog.Id"
+               Open="true"
+               Title="@dialog.Options.Title"
+               Icon="@dialog.Options.Icon"
+               IconColor="dialog.Options.IconColor"
+               Buttons="dialog.Options.Buttons"
+               Size="dialog.Options.Size"
+               CloseOnBackdrop="dialog.Options.CloseOnBackdrop"
+               ShowCloseButton="dialog.Options.ShowCloseButton"
+               OnClose="@(r => DialogService.Close(dialog, r))">
+        @if (dialog.Options.Content is not null)
+        {
+            @dialog.Options.Content
+        }
+        else
+        {
+            <p class="bz-dialog__message">@dialog.Options.Message</p>
+        }
+    </BzDialog>
+}
+
+@code {
+    protected override void OnInitialized() => DialogService.Changed += OnChanged;
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => DialogService.Changed -= OnChanged;
+}

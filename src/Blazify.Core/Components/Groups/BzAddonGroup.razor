@@ -1,0 +1,36 @@
+@namespace BzCore.Components.Groups
+@inherits BzComponentBase
+
+
+@if (Visible)
+{
+    <div class="@RootClass" style="@RootStyle()" id="@Id">
+        @if (Prepend is not null)
+        {
+            <div class="bz-ig__addon bz-ig__addon--start">@Prepend</div>
+        }
+
+        <div class="bz-ig__control">@ChildContent</div>
+
+        @if (Append is not null)
+        {
+            <div class="bz-ig__addon bz-ig__addon--end">@Append</div>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>Before content</summary>
+    [Parameter] public RenderFragment? Prepend { get; set; }
+
+    /// <summary>After content</summary>
+    [Parameter] public RenderFragment? Append { get; set; }
+
+    /// <summary>Main content</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Variant</summary>
+    [Parameter] public BzInputGroupVariant Variant { get; set; } = BzInputGroupVariant.Default;
+
+    private string RootClass => $"bz-ig bz-ig--{Variant.ToString().ToLowerInvariant()} {Class}";
+}

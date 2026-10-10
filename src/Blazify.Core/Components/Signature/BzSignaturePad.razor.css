@@ -1,0 +1,11 @@
+.bz-sign { font-family: var(--bz-font-family); width: 100%; }
+.bz-sign__label { display: block; font-size: 13px; font-weight: 600; margin-bottom: .4rem; color: var(--bz-text); }
+.bz-sign__pad { position: relative; border: 2px dashed var(--bz-border); border-radius: var(--bz-radius); background: var(--bz-surface); overflow: hidden; color: var(--bz-text); }
+.bz-sign__canvas { width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+.bz-sign__hint { position: absolute; inset: 0; display: grid; place-items: center; color: var(--bz-text-muted); pointer-events: none; font-size: 14px; }
+.bz-sign__bar { display: flex; gap: .5rem; margin-top: .6rem; }
+.bz-sign__btn { display: inline-flex; align-items: center; gap: .4rem; font-family: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer; padding: .45rem .85rem; border-radius: var(--bz-radius); border: 1px solid var(--bz-border);
+    background: var(--bz-surface); color: var(--bz-text); transition: all var(--bz-transition-fast); }
+.bz-sign__btn:hover:not(:disabled) { border-color: var(--bz-primary); color: var(--bz-primary); }
+.bz-sign__btn:disabled { opacity: .5; cursor: not-allowed; }

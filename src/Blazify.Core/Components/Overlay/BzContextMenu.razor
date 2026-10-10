@@ -1,0 +1,51 @@
+@namespace BzCore.Components.Overlay
+@inherits BzComponentBase
+@using BzCore.Components.Navigation
+
+@*  BzContextMenu — wraps content and shows a custom menu on right-click. The menu
+    opens at the cursor position; an item whose Text is "-" renders as a separator.  *@
+
+@if (Visible)
+{
+    <div class="bz-ctx-anchor @Class" style="@RootStyle()" id="@Id"
+         @oncontextmenu="OnContext" @oncontextmenu:preventDefault="true">
+        @ChildContent
+
+        @if (_open)
+        {
+            <div class="bz-select__backdrop" @onclick="Close"
+                 @oncontextmenu="Close" @oncontextmenu:preventDefault="true"></div>
+
+            <div class="bz-ctx-menu" style="@($"top:{_y}px;inset-inline-start:{_x}px")">
+                @foreach (var item in Items)
+                {
+                    @if (item.Text == "-")
+                    {
+                        <div class="bz-ctx-sep"></div>
+                    }
+                    else
+                    {
+                        <button class="bz-ctx-item" disabled="@item.Disabled" @onclick="() => Run(item)">
+                            @if (!string.IsNullOrEmpty(item.Icon)) { <i class="@item.Icon"></i> }
+                            <span>@item.Text</span>
+                        </button>
+                    }
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>Menu entries; use Text = "-" for a separator.</summary>
+    [Parameter] public List<BzMenuItem> Items { get; set; } = new();
+    /// <summary>The content that responds to right-click.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool _open;
+    private double _x, _y;   // cursor position where the menu opens
+
+    private void OnContext(MouseEventArgs e) { _x = e.OffsetX; _y = e.OffsetY; _open = true; }
+    private void Close() => _open = false;
+    private void Run(BzMenuItem item) { _open = false; item.OnClick?.Invoke(); }
+}

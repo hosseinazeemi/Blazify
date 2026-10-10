@@ -1,0 +1,108 @@
+@namespace BzCore.Components.AutoComplete
+@typeparam TItem
+@inherits BzFieldBase<TItem>
+
+@if (Visible)
+{
+    <div class="@WrapperClass" style="@RootStyle()">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-ac__label" for="@Id">
+                @Label
+                @if (Required)
+                {
+                    <span class="bz-ac__req" aria-hidden="true">*</span>
+                }
+            </label>
+        }
+
+        <div class="bz-ac__field">
+            @if (!string.IsNullOrEmpty(StartIcon))
+            {
+                <i class="@StartIcon bz-ac__icon"></i>
+            }
+            else
+            {
+                <i class="fa-solid fa-magnifying-glass bz-ac__icon"></i>
+            }
+
+            <input @ref="_input"
+                   id="@Id"
+                   name="@EffectiveName"
+                   class="bz-ac__el"
+                   value="@_search"
+                   placeholder="@Placeholder"
+                   autocomplete="off"
+                   disabled="@IsDisabled"
+                   readonly="@IsReadOnly"
+                   tabindex="@TabIndex"
+                   role="combobox"
+                   aria-expanded="@_open.ToString().ToLowerInvariant()"
+                   @oninput="OnInputAsync"
+                   @onkeydown="OnKeyDownAsync"
+                   @onfocus="OnFocusAsync"
+                   @onfocusout="OnFocusOut"
+                   @attributes="SafeAttributes" />
+
+            @if (_loading)
+            {
+                <span class="bz-ac__spinner" aria-hidden="true"></span>
+            }
+            else if (Clearable && !string.IsNullOrEmpty(_search) && !IsDisabled && !IsReadOnly)
+            {
+                <button type="button" class="bz-ac__clear" tabindex="-1"
+                        @onmousedown:preventDefault="true"
+                        @onclick="ClearAsync" aria-label="پاک کردن">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            }
+
+            @if (!string.IsNullOrEmpty(EndIcon))
+            {
+                <i class="@EndIcon bz-ac__icon"></i>
+            }
+        </div>
+
+        @if (_open)
+        {
+            <div class="bz-ac__panel" role="listbox">
+                @if (_results.Count == 0 && !_loading)
+                {
+                    <div class="bz-ac__empty">@NoResultsText</div>
+                }
+                else
+                {
+                    @for (var i = 0; i < _results.Count; i++)
+                    {
+                        var idx = i;
+                        var item = _results[i];
+                        <div class="bz-ac__option @(idx == _activeIndex ? "is-active" : "")"
+                             role="option"
+                             aria-selected="@(idx == _activeIndex)"
+                             @onmousedown:preventDefault="true"
+                             @onmousedown="@(() => SelectAsync(item))"
+                             @onmouseenter="@(() => _activeIndex = idx)">
+                            @if (ItemTemplate is not null)
+                            {
+                                @ItemTemplate(item)
+                            }
+                            else
+                            {
+                                @Highlight(ToText(item))
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        }
+
+        @if (HasError)
+        {
+            <div class="bz-ac__msg bz-ac__msg--error">@ErrorText</div>
+        }
+        else if (!string.IsNullOrEmpty(HelperText))
+        {
+            <div class="bz-ac__msg">@HelperText</div>
+        }
+    </div>
+}

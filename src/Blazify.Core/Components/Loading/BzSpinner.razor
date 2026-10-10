@@ -1,0 +1,110 @@
+@namespace BzCore.Components.Loading
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <div class="@RootClass"
+         style="@BoxStyle"
+         id="@Id"
+         role="status"
+        aria-label="@(Label ?? "در حال بارگذاری")">
+        @if (FullScreen && Backdrop)
+        {
+            <span class="bz-sp__backdrop" aria-hidden="true"></span>
+        }
+        <span class="bz-sp__content">
+        <span class="bz-sp__box">
+            @switch (Variant)
+            {
+                case BzSpinnerVariant.Ring:
+                    <span class="bz-sp__ring"></span>
+                    break;
+
+                case BzSpinnerVariant.DualRing:
+                    <span class="bz-sp__dualring"></span>
+                    break;
+
+                case BzSpinnerVariant.Pulse:
+                    <span class="bz-sp__pulse"></span>
+                    break;
+
+                case BzSpinnerVariant.Orbit:
+                    <span class="bz-sp__orbit"><i></i></span>
+                    break;
+
+                case BzSpinnerVariant.Ripple:
+                    <span class="bz-sp__ripple"><i></i><i></i></span>
+                    break;
+
+                case BzSpinnerVariant.Dots:
+                    <span class="bz-sp__dots">
+                        @for (var i = 0; i < 3; i++)
+                        {
+                            <i></i>
+                        }
+                    </span>
+                    break;
+
+                case BzSpinnerVariant.Bars:
+                    <span class="bz-sp__bars">
+                        @for (var i = 0; i < 5; i++)
+                        {
+                            <i></i>
+                        }
+                    </span>
+                    break;
+
+                case BzSpinnerVariant.Wave:
+                    <span class="bz-sp__wave">
+                        @for (var i = 0; i < 5; i++)
+                        {
+                            <i></i>
+                        }
+                    </span>
+                    break;
+
+                case BzSpinnerVariant.Ellipsis:
+                    <span class="bz-sp__ellipsis">
+                        @for (var i = 0; i < 4; i++)
+                        {
+                            <i></i>
+                        }
+                    </span>
+                    break;
+
+                case BzSpinnerVariant.Grid:
+                    <span class="bz-sp__grid">
+                        @for (var i = 0; i < 9; i++)
+                        {
+                            <i></i>
+                        }
+                    </span>
+                    break;
+
+                case BzSpinnerVariant.Roller:
+                    <span class="bz-sp__roller">
+                        @for (var i = 0; i < 8; i++)
+                        {
+                            <i></i>
+                        }
+                    </span>
+                    break;
+
+                case BzSpinnerVariant.Clock:
+                    <span class="bz-sp__clock">
+                        @for (var i = 0; i < 12; i++)
+                        {
+                            <i></i>
+                        }
+                    </span>
+                    break;
+            }
+        </span>
+
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <span class="bz-sp__label">@Label</span>
+        }
+        </span>
+    </div>
+}

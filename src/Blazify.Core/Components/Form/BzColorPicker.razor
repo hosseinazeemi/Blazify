@@ -1,0 +1,60 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <div class="bz-color @Class" style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-color__label">@Label</label>
+        }
+
+        <div class="bz-color__row">
+            <label class="bz-color__swatch" style="background:@(Value ?? "#ffffff")">
+                <input type="color" value="@(Value ?? "#000000")" @onchange="OnPick" />
+            </label>
+
+            <input class="bz-color__hex" type="text" value="@Value" placeholder="#RRGGBB" @onchange="OnHex" />
+        </div>
+
+        @if (Swatches is not null)
+        {
+            <div class="bz-color__presets">
+                @foreach (var swatch in Swatches)
+                {
+                    <button type="button"
+                            class="bz-color__preset"
+                            style="background:@swatch"
+                            @onclick="@(() => Set(swatch))">
+                    </button>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code
+{
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>
+    /// Prefix colors
+    /// </summary>
+    [Parameter]
+    public string[]? Swatches { get; set; } =
+    {
+        "#2f6fed", "#16a34a", "#f59e0b", "#e11d48", "#7c3aed", "#0ea5e9", "#111827"
+    };
+
+    async Task OnPick(ChangeEventArgs e) => await Set(e.Value?.ToString());
+
+    async Task OnHex(ChangeEventArgs e) => await Set(e.Value?.ToString());
+
+    async Task Set(string? color)
+    {
+        Value = color;
+        if (ValueChanged.HasDelegate) await ValueChanged.InvokeAsync(color);
+    }
+}

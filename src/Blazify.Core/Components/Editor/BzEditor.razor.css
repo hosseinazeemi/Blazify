@@ -1,0 +1,6 @@
+/* ====================  BzEditor (CKEditor wrapper)  ==================== */
+.bz-editor { font-family: var(--bz-font-family); width: 100%; }
+.bz-editor__label { display: block; font-size: 13px; font-weight: 600; margin-bottom: .4rem; color: var(--bz-text); }
+.bz-editor__host ::deep .ck-editor__editable { min-height: var(--bz-ed-h, 260px); direction: rtl; text-align: start; }
+.bz-editor__host ::deep .ck.ck-editor { border-radius: var(--bz-radius); overflow: hidden; }
+.bz-editor__host ::deep .ck.ck-toolbar { background: var(--bz-surface-muted); }

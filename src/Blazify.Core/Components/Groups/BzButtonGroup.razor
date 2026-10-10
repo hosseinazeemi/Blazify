@@ -1,0 +1,97 @@
+@namespace BzCore.Components.Groups
+@inherits BzComponentBase
+@typeparam TValue
+@using BzCore.Components.Button
+
+@if (Visible)
+{
+    <div class="@RootClass" style="@RootStyle()" id="@Id" role="group">
+        @if (Items is not null)
+        {
+            @foreach (var item in Items)
+            {
+                <button type="button"
+                        class="@ToggleClass(IsActive(item.Value))"
+                        disabled="@item.Disabled"
+                        @onclick="() => ToggleAsync(item.Value)">
+                    @if (!string.IsNullOrEmpty(item.Icon))
+                    {
+                        <i class="@item.Icon"></i>
+                    }
+
+                    @if (!string.IsNullOrEmpty(item.Label))
+                    {
+                        <span>@item.Label</span>
+                    }
+                </button>
+            }
+        }
+        else
+        {
+            @ChildContent
+        }
+    </div>
+}
+
+@code {
+    /// <summary>Custom buttons.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public BzButtonGroupVariant Variant { get; set; } = BzButtonGroupVariant.Attached;
+
+    [Parameter] public BzOrientation Orientation { get; set; } = BzOrientation.Horizontal;
+
+    [Parameter] public BzSize Size { get; set; } = BzSize.Medium;
+
+    [Parameter] public List<BzButtonGroupItem<TValue>>? Items { get; set; }
+
+    [Parameter] public bool Multiple { get; set; }
+
+    /// <summary>two-way bindable</summary>
+    [Parameter] public TValue? Value { get; set; }
+
+    [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
+
+    /// <summary>two-way bindable => in multiple mode</summary>
+    [Parameter] public List<TValue>? Values { get; set; }
+
+    [Parameter] public EventCallback<List<TValue>> ValuesChanged { get; set; }
+
+    private string RootClass =>
+        $"bz-btn-group bz-btn-group--{Variant.ToString().ToLowerInvariant()} " +
+        $"bz-btn-group--{Orientation.ToString().ToLowerInvariant()} {Class}";
+
+    private string ToggleClass(bool active) =>
+        $"bz-btn-group__toggle bz-btn-group__toggle--{Size.ToString().ToLowerInvariant()} " +
+        (active ? "is-active" : "");
+
+    private bool IsActive(TValue value) =>
+        Multiple
+            ? Values?.Contains(value) ?? false
+            : EqualityComparer<TValue?>.Default.Equals(Value, value);
+
+    private async Task ToggleAsync(TValue value)
+    {
+        if (Multiple)
+        {
+            var list = Values is null ? new List<TValue>() : new List<TValue>(Values);
+
+            if (!list.Remove(value))
+                list.Add(value);   // toggle: remove if present, else add
+
+            Values = list;
+
+            if (ValuesChanged.HasDelegate)
+                await ValuesChanged.InvokeAsync(list);
+        }
+        else
+        {
+            Value = value;
+
+            if (ValueChanged.HasDelegate)
+                await ValueChanged.InvokeAsync(value);
+        }
+
+        StateHasChanged();
+    }
+}

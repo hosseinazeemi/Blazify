@@ -1,0 +1,72 @@
+@namespace BzCore.Components.Tree
+@typeparam TItem
+@inherits ComponentBase
+@implements IDisposable
+
+@*  BzTreeNode — one row of a BzTreeView, drawn recursively for children. It holds
+    no state itself: it reads everything from the parent Tree and delegates every
+    action back to it, re-rendering when the Tree raises Changed.  *@
+
+@if (Tree.IsVisible(Node))
+{
+    var hasChildren = Tree.HasChildren(Node);
+    var expanded = Tree.IsExpanded(Node);
+    <div class="bz-tree__node">
+        <div class="bz-tree__row @(Tree.IsSelected(Node) ? "is-selected" : "")"
+             style="padding-inline-start:@(Level * 1.25 + 0.4)rem"
+             @onclick="@(() => Tree.RowClickAsync(Node))">
+
+            @if (hasChildren)
+            {
+                <button type="button" class="bz-tree__expander @(expanded ? "is-open" : "")"
+                        @onclick:stopPropagation="true" @onclick="@(() => Tree.ToggleExpand(Node))">
+                    <i class="fa-solid fa-angle-down"></i>
+                </button>
+            }
+            else
+            {
+                <span class="bz-tree__leaf"></span>
+            }
+
+            @if (Tree.ShowCheckbox)
+            {
+                <input type="checkbox" class="bz-tree__check" checked="@Tree.IsSelected(Node)"
+                       @onclick:stopPropagation="true" @onchange="@(() => Tree.ToggleCheckAsync(Node))" />
+            }
+
+            @if (!string.IsNullOrEmpty(Tree.IconOf(Node)))
+            {
+                <i class="@Tree.IconOf(Node) bz-tree__icon"></i>
+            }
+
+            <span class="bz-tree__label">@Tree.Highlight(Tree.TextOf(Node))</span>
+
+            @if (Tree.Actions is not null)
+            {
+                <span class="bz-tree__actions" @onclick:stopPropagation="true">
+                    @Tree.Actions(Node)
+                </span>
+            }
+        </div>
+
+        @if (hasChildren && expanded)
+        {
+            <div class="bz-tree__children">
+                @foreach (var child in Tree.Children(Node))
+                {
+                    <BzTreeNode TItem="TItem" Tree="Tree" Node="child" Level="Level + 1" />
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public BzTreeView<TItem> Tree { get; set; } = default!;
+    [Parameter] public TItem Node { get; set; } = default!;
+    [Parameter] public int Level { get; set; }
+
+    protected override void OnInitialized() => Tree.Changed += OnChanged;
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Tree.Changed -= OnChanged;
+}

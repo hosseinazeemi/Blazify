@@ -1,0 +1,66 @@
+@namespace BzCore.Components.Accordion
+@inherits ComponentBase
+@implements IDisposable
+
+@{
+    var open = Parent?.IsExpanded(this) ?? false;
+}
+<div class="bz-acc__item @(open ? "is-open" : "") @(Disabled ? "is-disabled" : "")">
+    <button type="button" class="bz-acc__header" disabled="@Disabled" @onclick="Toggle"
+            aria-expanded="@open">
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <i class="@Icon bz-acc__lead"></i>
+        }
+        <span class="bz-acc__title">@Title</span>
+        @if (HeaderContent is not null)
+        {
+            <span class="bz-acc__header-extra">@HeaderContent</span>
+        }
+        <span class="bz-acc__chevron"><i class="fa-solid fa-chevron-down"></i></span>
+    </button>
+    <div class="bz-acc__panel">
+        <div class="bz-acc__panel-inner">
+            <div class="bz-acc__body">
+                @ChildContent
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] internal BzAccordion? Parent { get; set; }
+
+    /// <summary>Header</summary>
+    [Parameter] public string? Title { get; set; }
+    /// <summary>FontAwesomeIcon</summary>
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool Expanded { get; set; }
+    /// <summary>
+    /// Optional
+    /// </summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>
+    /// Optional
+    /// </summary>
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Parent?.Register(this, Expanded);
+        if (Parent is not null) Parent.StateChanged += OnParentStateChanged;
+    }
+
+    private void OnParentStateChanged() => InvokeAsync(StateHasChanged);
+    private void Toggle() => Parent?.Toggle(this);
+
+    public void Dispose()
+    {
+        if (Parent is not null)
+        {
+            Parent.StateChanged -= OnParentStateChanged;
+            Parent.Unregister(this);
+        }
+    }
+}

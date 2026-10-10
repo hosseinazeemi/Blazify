@@ -1,0 +1,50 @@
+@namespace BzCore.Components.Display
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <span class="@RootClass" style="@BoxStyle @RootStyle()" id="@Id" title="@Title">
+        @if (!string.IsNullOrEmpty(ImageUrl))
+        {
+            <img src="@ImageUrl" alt="@Title" />
+        }
+        else if (!string.IsNullOrEmpty(Icon))
+        {
+            <i class="@Icon"></i>
+        }
+        else
+        {
+            @Initials
+        }
+    </span>
+}
+
+@code {
+    [Parameter] public string? ImageUrl { get; set; }
+
+    [Parameter] public string? Icon { get; set; }
+
+    [Parameter] public string? Text { get; set; }
+
+    [Parameter] public string? Title { get; set; }
+
+    [Parameter] public string Size { get; set; } = "44px";
+
+    [Parameter] public BzAvatarShape Shape { get; set; } = BzAvatarShape.Circle;
+
+    [Parameter] public string? Color { get; set; }
+
+    private string RootClass =>
+        $"bz-avatar bz-avatar--{Shape.ToString().ToLowerInvariant()} {Class}";
+
+    private string BoxStyle
+    {
+        get
+        {
+            var background = Color is null ? "" : $"background:{Color};";
+            return $"width:{Size};height:{Size};font-size:calc({Size}/2.4);{background}";
+        }
+    }
+
+    private string Initials => string.IsNullOrWhiteSpace(Text) ? "?" : Text.Trim()[..1];
+}

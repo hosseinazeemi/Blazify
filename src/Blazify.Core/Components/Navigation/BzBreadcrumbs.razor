@@ -1,0 +1,64 @@
+@namespace BzCore.Components.Navigation
+@inherits BzComponentBase
+@using Microsoft.AspNetCore.Components.Routing
+
+@if (Visible)
+{
+    <nav class="bz-bc @Class" style="@RootStyle()" id="@Id" aria-label="breadcrumb">
+        @for (var i = 0; i < Items.Count; i++)
+        {
+            var item = Items[i];
+            var last = i == Items.Count - 1;
+            <span class="bz-bc__item @(last ? "is-current" : "")">
+                @if (!last && !string.IsNullOrEmpty(item.Href))
+                {
+                    <NavLink class="bz-bc__link" href="@item.Href">
+                        @if (!string.IsNullOrEmpty(item.Icon))
+                        {
+                            <i class="@item.Icon"></i>
+                        }
+                        <span>@item.Text</span>
+                    </NavLink>
+                }
+                else
+                {
+                    <span class="bz-bc__text">
+                        @if (!string.IsNullOrEmpty(item.Icon))
+                        {
+                            <i class="@item.Icon"></i>
+                        }
+                        <span>@item.Text</span>
+                    </span>
+                }
+            </span>
+            @if (!last)
+            {
+                <span class="bz-bc__sep">
+                    @switch (Separator)
+                    {
+                        case BzBreadcrumbSeparator.Slash:
+                            <span>/</span>
+                            break;
+                        case BzBreadcrumbSeparator.Arrow:
+
+                            <i class="fa-solid fa-arrow-left-long"></i>
+                            break;
+                        case BzBreadcrumbSeparator.Dot:
+
+                            <i class="fa-solid fa-circle" style="font-size:.3em"></i>
+                            break;
+                        default:
+
+                            <i class="fa-solid fa-angle-left"></i>
+                            break;
+                    }
+                </span>
+            }
+        }
+    </nav>
+}
+
+@code {
+    [Parameter] public List<BzBreadcrumbItem> Items { get; set; } = new();
+    [Parameter] public BzBreadcrumbSeparator Separator { get; set; } = BzBreadcrumbSeparator.Chevron;
+}

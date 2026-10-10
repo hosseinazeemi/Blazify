@@ -1,0 +1,28 @@
+/* ====================  BzStatCard  ==================== */
+.bz-stat {
+    --c: var(--bz-card-c, var(--bz-primary));
+    display: flex; align-items: center; gap: 1rem;
+    background: var(--bz-surface);
+    border: var(--bz-border-width, 1px) solid var(--bz-border);
+    border-radius: var(--bz-radius-lg, 16px);
+    padding: 1.1rem 1.25rem;
+    box-shadow: var(--bz-shadow);
+    font-family: var(--bz-font-family);
+    transition: transform var(--bz-transition), box-shadow var(--bz-transition);
+}
+.bz-stat.is-hoverable:hover { transform: translateY(-3px); box-shadow: var(--bz-shadow-lg); }
+
+.bz-stat__icon {
+    width: 52px; height: 52px; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: var(--bz-radius); font-size: 1.4rem;
+    background: color-mix(in srgb, var(--c) 15%, transparent); color: var(--c);
+}
+.bz-stat--filled .bz-stat__icon { background: var(--c); color: var(--bz-card-on, #fff); }
+
+.bz-stat__body { flex: 1 1 auto; min-width: 0; }
+.bz-stat__value { font-size: 1.5rem; font-weight: 800; line-height: 1.1; color: var(--bz-text); }
+.bz-stat__label { font-size: .8rem; color: var(--bz-text-muted); margin-top: .15rem; }
+.bz-stat__trend { display: inline-flex; align-items: center; gap: .25rem; font-size: .78rem; font-weight: 700; margin-top: .25rem; }
+.bz-stat__trend.up { color: var(--bz-success); }
+.bz-stat__trend.down { color: var(--bz-danger); }

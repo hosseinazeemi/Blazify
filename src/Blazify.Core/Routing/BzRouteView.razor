@@ -1,0 +1,293 @@
+@namespace BzCore.Routing
+@implements IDisposable
+@inject NavigationManager Nav
+@inject IServiceProvider Services
+@inject BzRouteTable Table
+@using Microsoft.Extensions.DependencyInjection
+@using System.Reflection
+@using System.Globalization
+
+@* Runs the guard chain, then the loader, then renders the page. Living here rather
+   than in a navigation handler means the very first page load is treated exactly
+   like every later navigation — one code path, no special cases. *@
+
+@if (_phase == Phase.Denied)
+{
+    <LayoutView Layout="@DefaultLayout">
+        @if (Denied is not null)
+        {
+            @Denied(_denyReason)
+        }
+        else
+        {
+            <div class="bz-route-empty">
+                <i class="fa-solid fa-lock"></i>
+                <h2>@(IsFa ? "دسترسی ندارید" : "Access denied")</h2>
+                @if (!string.IsNullOrWhiteSpace(_denyReason)) { <p>@_denyReason</p> }
+            </div>
+        }
+    </LayoutView>
+}
+else if (_phase == Phase.Failed)
+{
+    <LayoutView Layout="@DefaultLayout">
+        @if (ErrorContent is not null && _error is not null)
+        {
+            @ErrorContent(_error)
+        }
+        else
+        {
+            <div class="bz-route-empty">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h2>@(IsFa ? "خطا در بارگذاری" : "Could not load")</h2>
+                <p>@_error?.Message</p>
+            </div>
+        }
+    </LayoutView>
+}
+else if (_phase == Phase.Loading && !_keepPreviousUi)
+{
+    <LayoutView Layout="@DefaultLayout">
+        @if (Loading is not null)
+        {
+            @Loading
+        }
+        else
+        {
+            <div class="bz-route-loading" role="status" aria-live="polite">
+                <div class="bz-route-loading__ring"></div>
+                <span>@(IsFa ? "در حال بارگذاری…" : "Loading…")</span>
+            </div>
+        }
+    </LayoutView>
+}
+else if (_ready)
+{
+    @if (ApplyDocumentTitle && _title is not null)
+    {
+        <PageTitle>@_title</PageTitle>
+    }
+    @if (_meta?.ResolveDescription(IsFa) is { Length: > 0 } desc)
+    {
+        <HeadContent>
+            <meta name="description" content="@desc" />
+            @if (_meta.NoIndex)
+            {
+                <meta name="robots" content="noindex" />
+            }
+        </HeadContent>
+    }
+
+    @* @key on the URI re-creates the subtree per route, which replays the CSS
+       transition without any JS. *@
+    <div class="@TransitionClass" @key="_routeKey">
+        <CascadingValue Value="_context" IsFixed="false">
+            @if (RouteViewTemplate is not null)
+            {
+                @RouteViewTemplate(RouteData)
+            }
+            else
+            {
+                <RouteView RouteData="@RouteData" DefaultLayout="@DefaultLayout" />
+            }
+        </CascadingValue>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public RouteData RouteData { get; set; } = default!;
+    [Parameter] public Type? DefaultLayout { get; set; }
+    [Parameter] public RenderFragment? Loading { get; set; }
+    [Parameter] public RenderFragment<Exception>? ErrorContent { get; set; }
+    [Parameter] public RenderFragment<string?>? Denied { get; set; }
+    /// <summary>
+    /// Renders the matched page. Supply this to plug in your own route view —
+    /// AuthorizeRouteView, for example. Falls back to Blazor's RouteView.
+    /// </summary>
+    /// <remarks>
+    /// This is a template rather than a pair of NotAuthorized/Authorizing parameters
+    /// on purpose: AuthorizeRouteView lives in Microsoft.AspNetCore.Components.Authorization,
+    /// and taking that as a dependency would push it onto every consumer of Blazify —
+    /// including the ones that never authorize anything. The host already has the
+    /// package if it needs it, so it plugs the view in from there.
+    /// </remarks>
+    [Parameter] public RenderFragment<RouteData>? RouteViewTemplate { get; set; }
+    [Parameter] public BzRouteTransition Transition { get; set; } = BzRouteTransition.Fade;
+    [Parameter] public bool ApplyDocumentTitle { get; set; } = true;
+
+    private enum Phase { Idle, Loading, Ready, Denied, Failed }
+
+    private Phase _phase = Phase.Idle;
+    private bool _ready;
+    private bool _keepPreviousUi;
+    private string? _denyReason;
+    private Exception? _error;
+    private string? _title;
+    private BzRouteAttribute? _meta;
+    private BzRouteContext _context = new();
+    private string _routeKey = "";
+    private CancellationTokenSource? _cts;
+
+    private static bool IsFa => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName
+        .Equals("fa", StringComparison.OrdinalIgnoreCase);
+
+    private string TransitionClass => Transition switch
+    {
+        BzRouteTransition.Fade => "bz-route bz-route--fade",
+        BzRouteTransition.FadeUp => "bz-route bz-route--fade-up",
+        BzRouteTransition.Scale => "bz-route bz-route--scale",
+        _ => "bz-route",
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var uri = "/" + Nav.ToBaseRelativePath(Nav.Uri);
+        var key = RouteData.PageType.FullName + "|" + uri;
+        if (key == _routeKey && _phase is Phase.Ready or Phase.Denied or Phase.Failed) return;
+
+        _routeKey = key;
+        await ActivateAsync(uri);
+    }
+
+    private async Task ActivateAsync(string relativeUri)
+    {
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
+
+        var pageType = RouteData.PageType;
+        _meta = pageType.GetCustomAttribute<BzRouteAttribute>();
+        _title = _meta?.ResolveTitle(IsFa);
+        _error = null;
+        _denyReason = null;
+
+        var values = RouteData.RouteValues ?? new Dictionary<string, object?>();
+
+        // ---- 1. guards -------------------------------------------------------
+        var guards = pageType.GetCustomAttributes<BzGuardAttribute>()
+                             .OrderBy(g => g.Order)
+                             .ToList();
+
+        if (guards.Count > 0)
+        {
+            var gctx = new BzGuardContext
+            {
+                TargetUri = Nav.Uri,
+                RelativeUri = relativeUri,
+                PageType = pageType,
+                RouteValues = values,
+                Meta = _meta,
+                Services = Services,
+            };
+
+            foreach (var attr in guards)
+            {
+                if (ct.IsCancellationRequested) return;
+
+                IBzRouteGuard guard;
+                try
+                {
+                    guard = (IBzRouteGuard)ActivatorUtilities.GetServiceOrCreateInstance(Services, attr.GuardType);
+                }
+                catch (Exception ex)
+                {
+                    _error = new InvalidOperationException(
+                        $"Guard '{attr.GuardType.Name}' could not be resolved. Register it in DI or give it a public constructor.", ex);
+                    _phase = Phase.Failed; _ready = false;
+                    return;
+                }
+
+                BzGuardResult result;
+                try { result = await guard.CanActivateAsync(gctx, ct); }
+                catch (OperationCanceledException) { return; }
+                catch (Exception ex) { _error = ex; _phase = Phase.Failed; _ready = false; return; }
+
+                switch (result)
+                {
+                    case BzGuardResult.AllowResult:
+                        continue;
+
+                    case BzGuardResult.RedirectResult r:
+                        Nav.NavigateTo(r.Uri, forceLoad: false, replace: r.Replace);
+                        return;
+
+                    case BzGuardResult.DenyResult d:
+                        _denyReason = d.Reason;
+                        _phase = Phase.Denied;
+                        _ready = false;
+                        return;
+                }
+            }
+        }
+
+        // ---- 2. breadcrumbs --------------------------------------------------
+        var crumbs = Table.BuildBreadcrumbs(pageType, values, relativeUri, IsFa);
+
+        // ---- 3. loader -------------------------------------------------------
+        var loaderAttr = pageType.GetCustomAttribute<BzLoaderAttribute>();
+        object? data = null;
+
+        if (loaderAttr is not null)
+        {
+            _keepPreviousUi = loaderAttr.KeepPreviousUi && _ready;
+            _phase = Phase.Loading;
+            _context = new BzRouteContext
+            {
+                RelativeUri = relativeUri,
+                PageType = pageType,
+                Template = Table.ByPage(pageType)?.Template,
+                Meta = _meta,
+                RouteValues = values,
+                Breadcrumbs = crumbs,
+                IsLoading = true,
+            };
+            StateHasChanged();
+
+            try
+            {
+                var loader = (IBzRouteLoader)ActivatorUtilities.GetServiceOrCreateInstance(Services, loaderAttr.LoaderType);
+                data = await loader.LoadAsync(new BzLoaderContext
+                {
+                    RelativeUri = relativeUri,
+                    PageType = pageType,
+                    RouteValues = values,
+                    Services = Services,
+                }, ct);
+            }
+            catch (OperationCanceledException) { return; }
+            catch (Exception ex)
+            {
+                _error = ex;
+                _phase = Phase.Failed;
+                _ready = false;
+                _keepPreviousUi = false;
+                StateHasChanged();
+                return;
+            }
+        }
+
+        if (ct.IsCancellationRequested) return;
+
+        // ---- 4. render -------------------------------------------------------
+        _context = new BzRouteContext
+        {
+            RelativeUri = relativeUri,
+            PageType = pageType,
+            Template = Table.ByPage(pageType)?.Template,
+            Meta = _meta,
+            RouteValues = values,
+            Data = data,
+            Breadcrumbs = crumbs,
+            IsLoading = false,
+        };
+        _keepPreviousUi = false;
+        _phase = Phase.Ready;
+        _ready = true;
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}

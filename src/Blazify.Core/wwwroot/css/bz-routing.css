@@ -1,0 +1,160 @@
+/* ==========================================================================
+   Blazify routing — transitions, loading and empty states.
+   Everything here is pure CSS; the router itself ships no JavaScript.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Route transitions.
+
+   IMPORTANT: .bz-route wraps every page, so it sits above any dialog, drawer
+   or lightbox. A CSS transform on an ancestor becomes the containing block for
+   position:fixed descendants — which would pin that fixed UI to the top of the
+   document instead of the viewport. That is why:
+     • --fade (the default) animates opacity ONLY, and is always safe.
+     • --fade-up / --scale use a transform but run with fill-mode `none`, so the
+       wrapper is left untransformed once the animation ends.
+   Prefer --fade for pages that host fixed-position UI.
+   -------------------------------------------------------------------------- */
+.bz-route {
+    min-height: 1px; /* keeps the wrapper from collapsing before content paints */
+}
+
+.bz-route--fade {
+    animation: bzRouteFade 260ms var(--bz-transition, ease) both;
+}
+
+@keyframes bzRouteFade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.bz-route--fade-up {
+    animation: bzRouteFadeUp 300ms var(--bz-transition, ease);
+    animation-fill-mode: none;
+}
+
+@keyframes bzRouteFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bz-route--scale {
+    animation: bzRouteScale 260ms var(--bz-transition, ease);
+    animation-fill-mode: none;
+}
+
+@keyframes bzRouteScale {
+    from {
+        opacity: 0;
+        transform: scale(.985);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bz-route--fade,
+    .bz-route--fade-up,
+    .bz-route--scale {
+        animation: none;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Route loading state (shown while a loader runs)
+   -------------------------------------------------------------------------- */
+.bz-route-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 320px;
+    padding: 3rem 1rem;
+    font-family: var(--bz-font-family);
+    color: var(--bz-text-muted, #64748b);
+    font-size: 14px;
+}
+
+.bz-route-loading__ring {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid color-mix(in srgb, var(--bz-primary) 20%, transparent);
+    border-top-color: var(--bz-primary);
+    animation: bzRouteSpin .7s linear infinite;
+}
+
+@keyframes bzRouteSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   404 / denied / error states
+   -------------------------------------------------------------------------- */
+.bz-route-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    min-height: 60vh;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    font-family: var(--bz-font-family);
+    color: var(--bz-text);
+}
+
+    .bz-route-empty > i {
+        font-size: 2.5rem;
+        color: var(--bz-primary);
+        opacity: .55;
+        margin-bottom: .25rem;
+    }
+
+    .bz-route-empty h2 {
+        margin: 0;
+        font-size: 1.6rem;
+        font-weight: 800;
+    }
+
+    .bz-route-empty p {
+        margin: 0;
+        max-width: 46ch;
+        line-height: 1.8;
+        color: var(--bz-text-muted, #64748b);
+        font-size: 14px;
+    }
+
+    .bz-route-empty a {
+        margin-top: .6rem;
+        padding: .55rem 1.2rem;
+        border-radius: var(--bz-radius, 10px);
+        background: var(--bz-primary);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        transition: filter var(--bz-transition, 200ms);
+    }
+
+        .bz-route-empty a:hover {
+            filter: brightness(1.08);
+        }

@@ -1,0 +1,88 @@
+/* ====================  BzInput  ==================== */
+.bz-input {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    font-family: var(--bz-font-family);
+    width: 100%;
+}
+
+.bz-input__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--bz-text);
+}
+.bz-input__req { color: var(--bz-danger); margin-inline-start: .15rem; }
+
+.bz-input__field {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    height: var(--bz-control-h, 42px);
+    padding: 0 .75rem;
+    background: var(--bz-surface);
+    border: var(--bz-border-width, 1px) solid var(--bz-border);
+    border-radius: var(--bz-radius, 10px);
+    transition: border-color var(--bz-transition-fast), box-shadow var(--bz-transition-fast),
+                background-color var(--bz-transition-fast);
+}
+
+.bz-input__field:focus-within {
+    border-color: var(--bz-primary);
+    box-shadow: 0 0 0 3px var(--bz-focus-ring);
+}
+
+.bz-input--small .bz-input__field { height: 34px; }
+.bz-input--large .bz-input__field { height: 50px; }
+
+.bz-input__el {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--bz-text);
+    font-family: inherit;
+    font-size: var(--bz-font-size, 14px);
+}
+.bz-input__el::placeholder { color: var(--bz-text-muted); opacity: .8; }
+
+.bz-input__icon { color: var(--bz-text-muted); font-size: .95em; }
+.bz-input__affix {
+    color: var(--bz-text-muted);
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.bz-input__clear {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.4em; height: 1.4em; padding: 0;
+    border: none; border-radius: 50%;
+    background: var(--bz-surface-muted); color: var(--bz-text-muted);
+    cursor: pointer;
+    transition: background-color var(--bz-transition-fast), color var(--bz-transition-fast);
+}
+.bz-input__clear:hover { background: var(--bz-danger); color: #fff; }
+
+.bz-input__msg { font-size: 12px; color: var(--bz-text-muted); }
+.bz-input__msg--error { color: var(--bz-danger); }
+.bz-input__words {
+    margin-top: .35rem;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--bz-primary);
+    background: color-mix(in srgb, var(--bz-primary) 8%, transparent);
+    border-radius: var(--bz-radius-sm);
+    padding: .25rem .55rem;
+}
+
+/* states */
+.bz-input.is-disabled { opacity: .6; pointer-events: none; }
+.bz-input.is-invalid .bz-input__field { border-color: var(--bz-danger); }
+.bz-input.is-invalid .bz-input__field:focus-within {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bz-danger) 30%, transparent);
+}
+
+.bz-input--money .bz-input__el { text-align: start; letter-spacing: .3px; }

@@ -1,0 +1,110 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+@typeparam TValue
+
+@if (Visible)
+{
+    <div class="bz-select bz-mselect @(_open ? "is-open" : "") @Class"
+         style="@RootStyle()" id="@Id">
+
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-select__label">@Label</label>
+        }
+
+        @* ----- the control the user clicks to open the dropdown ----- *@
+        <button type="button" class="bz-select__control" disabled="@Disabled"
+                tabindex="@TabIndex" @attributes="ForwardedAttributes" @onclick="Open">
+
+            <span class="bz-mselect__chips">
+                @if (Values.Count == 0)
+                {
+                    <span class="bz-select__value is-placeholder">@Placeholder</span>
+                }
+                else
+                {
+                    @foreach (var value in Values)
+                    {
+                        <span class="bz-mselect__chip">
+                            @LabelFor(value)
+                            <i class="fa-solid fa-xmark"
+                               @onclick:stopPropagation="true"
+                               @onclick="() => TogglePick(value)"></i>
+                        </span>
+                    }
+                }
+            </span>
+
+            <i class="fa-solid fa-chevron-down bz-select__caret"></i>
+        </button>
+
+        @if (_open)
+        {
+            <div class="bz-select__backdrop" @onclick="Close"></div>
+            <div class="bz-select__menu">
+                @foreach (var option in Items)
+                {
+                    <button type="button"
+                            class="bz-select__opt @(IsSelected(option.Value) ? "is-sel" : "")"
+                            disabled="@option.Disabled"
+                            @onclick="() => TogglePick(option.Value)">
+                        <span class="bz-mselect__box">
+                            @if (IsSelected(option.Value)) { <i class="fa-solid fa-check"></i> }
+                        </span>
+                        <span>@option.Label</span>
+                    </button>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>The options the user can choose from.</summary>
+    [Parameter] public List<BzOption<TValue>> Items { get; set; } = new();
+
+    /// <summary>The currently selected values (two-way bindable).</summary>
+    [Parameter] public List<TValue> Values { get; set; } = new();
+    [Parameter] public EventCallback<List<TValue>> ValuesChanged { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "انتخاب کنید…";
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public int TabIndex { get; set; }
+
+    private bool _open;
+
+    private void Open()  { if (!Disabled) _open = true; }
+    private void Close() => _open = false;
+
+    /// <summary>True when <paramref name="value"/> is in the selected list.</summary>
+    private bool IsSelected(TValue value) =>
+        Values.Any(v => EqualityComparer<TValue>.Default.Equals(v, value));
+
+    /// <summary>The label to show on a chip for a selected value.</summary>
+    private string? LabelFor(TValue value) =>
+        Items.FirstOrDefault(i => EqualityComparer<TValue>.Default.Equals(i.Value, value))?.Label;
+
+    /// <summary>Add the value if it isn't selected, otherwise remove it.</summary>
+    private async Task TogglePick(TValue value)
+    {
+        var updated = new List<TValue>(Values);
+        if (!updated.Remove(value))   // Remove returns false when it wasn't there…
+            updated.Add(value);       // …so in that case we add it.
+
+        Values = updated;
+        await ValuesChanged.InvokeAsync(updated);
+    }
+
+    private IReadOnlyDictionary<string, object>? ForwardedAttributes
+    {
+        get
+        {
+            if (AdditionalAttributes is null) return null;
+            var copy = new Dictionary<string, object>(AdditionalAttributes);
+            copy.Remove("class");
+            copy.Remove("style");
+            return copy;
+        }
+    }
+}

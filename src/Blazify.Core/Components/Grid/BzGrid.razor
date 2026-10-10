@@ -1,0 +1,286 @@
+@namespace BzCore.Components.Grid
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@typeparam TItem
+@inherits BzComponentBase
+
+<CascadingValue Value="this" IsFixed="true">
+    @Columns
+</CascadingValue>
+
+@if (Visible)
+{
+    <div class="bz-grid-wrap @(Resizable ? "is-resizable" : "") @Class" style="@RootStyle()" id="@GridId">
+
+        @if (ShowTools)
+        {
+            <div class="bz-grid__toolbar">
+                @if (ToolbarContent is not null || HasHeaderActions)
+                {
+                    <div class="bz-grid__toolbar-start">
+                        @ToolbarContent
+                        @if (HasHeaderActions)
+                        {
+                            <div class="bz-grid__header-actions">
+                                @foreach (var action in HeaderActions!.Where(a => a.Visible))
+                                {
+                                    <BzButton @key="action"
+                                              Text="@action.Title"
+                                              StartIcon="@action.StartIcon"
+                                              EndIcon="@action.EndIcon"
+                                              Color="@action.Color"
+                                              Variant="@action.Variant"
+                                              Size="@action.Size"
+                                              Disabled="@IsHeaderActionDisabled(action)"
+                                              ReadOnly="@action.ReadOnly"
+                                              Loading="@action.Loading"
+                                              LoadingEffect="@action.LoadingEffect"
+                                              IconOnly="@action.IconOnly"
+                                              FullWidth="@action.FullWidth"
+                                              Rounded="@action.Rounded"
+                                              Ripple="@action.Ripple"
+                                              AutoLoadingOnClick="@action.AutoLoadingOnClick"
+                                              TabIndex="@action.TabIndex"
+                                              ButtonType="@action.ButtonType"
+                                              Class="@action.Class"
+                                              Style="@action.Style"
+                                              AdditionalAttributes="@ActionAttributes(action)"
+                                              OnClick="@(_ => InvokeHeaderActionAsync(action))" />
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                @if (ShowSearch)
+                {
+                    <div class="bz-grid__search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" placeholder="جستجو…" value="@_search"
+                               @oninput="@(e => OnSearch(e.Value?.ToString()))" />
+                    </div>
+                }
+                @if (ShowImport || ShowExport)
+                {
+                    <div class="bz-grid__toolbar-end">
+                        @if (ShowImport)
+                        {
+                            <label class="bz-grid__tool-btn">
+                                <i class="fa-solid fa-file-import"></i> <span>ورود</span>
+                                <InputFile OnChange="OnImportFile" accept=".csv,text/csv" />
+                            </label>
+                        }
+                        @if (ShowExport)
+                        {
+                            <button type="button" class="bz-grid__tool-btn" @onclick="ExportCsvAsync">
+                                <i class="fa-solid fa-file-export"></i> <span>خروجی CSV</span>
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="bz-grid__scroll">
+            <table class="@TableClass">
+                <thead>
+                    <tr>
+                        @if (Selectable)
+                        {
+                            <th class="bz-grid__select-col">
+                                @if (MultiSelect)
+                                {
+                                    <input type="checkbox" class="bz-check" checked="@AllPageSelected"
+                                           disabled="@(SelectablePageItems.Count == 0)"
+                                           @onchange="ToggleSelectAll" />
+                                }
+                            </th>
+                        }
+                        @if (DetailTemplate is not null)
+                        {
+                            <th class="bz-grid__expand-col"></th>
+                        }
+                        @foreach (var col in _columns)
+                        {
+                            <th style="@(col.Width is not null ? $"width:{col.Width};" : null)"
+                                class="bz-grid__th bz-grid__th--@col.Align @(col.Sortable ? "is-sortable" : "") @(col.Sticky ? "bz-grid__sticky" : "")"
+                                @onclick="@(() => ToggleSort(col))">
+                                <span class="bz-grid__th-inner">
+                                    @if (col.HeaderTemplate is not null)
+                                    {
+                                        @col.HeaderTemplate
+                                    }
+                                    else
+                                    {
+                                        @col.Title
+                                    }
+                                    @if (col.Sortable)
+                                    {
+                                        <i class="@SortIcon(col) bz-grid__sort"></i>
+                                    }
+                                </span>
+                                @if (Resizable)
+                                {
+                                    <span class="bz-grid__resizer" @onclick:stopPropagation="true"></span>
+                                }
+                            </th>
+                        }
+                    </tr>
+
+                    @if (AnyFilterable)
+                    {
+                        <tr class="bz-grid__filter-row">
+                            @if (Selectable) { <th></th> }
+                            @if (DetailTemplate is not null) { <th></th> }
+                            @foreach (var col in _columns)
+                            {
+                                <th>
+                                    @if (col.Filterable)
+                                    {
+                                        <input type="text" class="bz-grid__filter" placeholder="فیلتر…"
+                                               value="@(_filters.TryGetValue(col, out var fv) ? fv : "")"
+                                               @oninput="@(e => SetFilter(col, e.Value?.ToString()))" />
+                                    }
+                                </th>
+                            }
+                        </tr>
+                    }
+                </thead>
+
+                <tbody>
+                    @if (Loading)
+                    {
+                        <tr><td colspan="@TotalColumns" class="bz-grid__state">
+                            <span class="bz-grid__spinner"></span> در حال بارگذاری…
+                        </td></tr>
+                    }
+                    else if (PageItems.Count == 0)
+                    {
+                        <tr><td colspan="@TotalColumns" class="bz-grid__state bz-grid__empty">
+                            <i class="fa-regular fa-folder-open"></i> @EmptyText
+                        </td></tr>
+                    }
+                    else
+                    {
+                        RenderFragment<TItem> rowFrag = row =>
+                        @<text>
+                            <tr class="bz-grid__row @(IsSelected(row) ? "is-selected" : "") @(IsRowDisabled(row) ? "is-disabled" : "") @(RowClass?.Invoke(row))"
+                                aria-disabled="@IsRowDisabled(row).ToString().ToLowerInvariant()"
+                                inert="@IsRowDisabled(row)"
+                                @onclick="@(() => RowClicked(row))"
+                                @ondblclick="@(() => RowDoubleClicked(row))">
+                                @if (Selectable)
+                                {
+                                    <td class="bz-grid__select-col" @onclick:stopPropagation="true">
+                                        <input type="checkbox" class="bz-check" checked="@IsSelected(row)"
+                                               disabled="@IsRowDisabled(row)" @onchange="@(() => ToggleSelect(row))" />
+                                    </td>
+                                }
+                                @if (DetailTemplate is not null)
+                                {
+                                    <td class="bz-grid__expand-col" @onclick:stopPropagation="true">
+                                        <button type="button" class="bz-grid__expander @(IsExpanded(row) ? "is-open" : "")"
+                                                disabled="@IsRowDisabled(row)"
+                                                @onclick="@(() => ToggleExpand(row))" aria-label="باز/بستن">
+                                            <i class="fa-solid fa-chevron-left"></i>
+                                        </button>
+                                    </td>
+                                }
+                                @foreach (var col in _columns)
+                                {
+                                    <td class="bz-grid__td--@col.Align @(col.Sticky ? "bz-grid__sticky" : "") @(col.Editable ? "is-editable" : "")"
+                                        @ondblclick="@(() => BeginEdit(row, col))" @ondblclick:stopPropagation="true">
+                                        @if (IsEditing(row, col))
+                                        {
+                                            <input class="bz-grid__edit" value="@_editValue" autofocus
+                                                   @onclick:stopPropagation="true"
+                                                   @oninput="@(e => _editValue = e.Value?.ToString() ?? "")"
+                                                   @onblur="CommitEdit"
+                                                   @onkeydown="@(e => { if (e.Key == "Enter") CommitEdit(); else if (e.Key == "Escape") CancelEdit(); })" />
+                                        }
+                                        else if (col.Template is not null)
+                                        {
+                                            @col.Template(row)
+                                        }
+                                        else
+                                        {
+                                            @col.GetText(row)
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            @if (DetailTemplate is not null && IsExpanded(row))
+                            {
+                                <tr class="bz-grid__detail-row">
+                                    <td colspan="@TotalColumns"><div class="bz-grid__detail">@DetailTemplate(row)</div></td>
+                                </tr>
+                            }
+                        </text>;
+
+                        @if (GroupBy is not null)
+                        {
+                            @foreach (var g in GroupedPage())
+                            {
+                                <tr class="bz-grid__group-row">
+                                    <td colspan="@TotalColumns">
+                                        <i class="fa-solid fa-layer-group"></i> @(g.Key?.ToString()) <span class="bz-grid__group-count">(@g.Count())</span>
+                                    </td>
+                                </tr>
+                                @foreach (var item in g) { @rowFrag(item) }
+                            }
+                        }
+                        else if (Virtualize)
+                        {
+                            <Virtualize Items="PageItemsList" Context="item" ItemSize="44">
+                                @rowFrag(item)
+                            </Virtualize>
+                        }
+                        else
+                        {
+                            @foreach (var item in PageItems) { @rowFrag(item) }
+                        }
+                    }
+                </tbody>
+
+                @if (HasFooter)
+                {
+                    <tfoot>
+                        <tr class="bz-grid__foot">
+                            @if (Selectable) { <td></td> }
+                            @if (DetailTemplate is not null) { <td></td> }
+                            @foreach (var col in _columns)
+                            {
+                                <td class="bz-grid__td--@col.Align">@AggregateText(col)</td>
+                            }
+                        </tr>
+                    </tfoot>
+                }
+            </table>
+        </div>
+
+        @if (Pageable && TotalCount > 0)
+        {
+            <div class="bz-grid__pager">
+                <div class="bz-grid__pager-info">
+                    نمایش @FirstRowIndex تا @LastRowIndex از @TotalCount
+                </div>
+
+                <div class="bz-grid__pager-size">
+                    تعداد در صفحه:
+                    <select @onchange="@(e => ChangePageSize(int.Parse(e.Value!.ToString()!)))">
+                        @foreach (var s in PageSizeOptions)
+                        {
+                            <option value="@s" selected="@(s == PageSize)">@s</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="bz-grid__pager-nav">
+                    <button type="button" disabled="@(_page == 0)" @onclick="@(() => GoTo(0))" title="اول"><i class="fa-solid fa-angles-right"></i></button>
+                    <button type="button" disabled="@(_page == 0)" @onclick="@(() => GoTo(_page - 1))" title="قبلی"><i class="fa-solid fa-angle-right"></i></button>
+                    <span class="bz-grid__pager-page">@(_page + 1) / @PageCount</span>
+                    <button type="button" disabled="@(_page >= PageCount - 1)" @onclick="@(() => GoTo(_page + 1))" title="بعدی"><i class="fa-solid fa-angle-left"></i></button>
+                    <button type="button" disabled="@(_page >= PageCount - 1)" @onclick="@(() => GoTo(PageCount - 1))" title="آخر"><i class="fa-solid fa-angles-left"></i></button>
+                </div>
+            </div>
+        }
+    </div>
+}

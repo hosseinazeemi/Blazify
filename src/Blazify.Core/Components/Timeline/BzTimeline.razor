@@ -1,0 +1,48 @@
+@namespace BzCore.Components.Timeline
+@inherits BzComponentBase
+@using BzCore.Helpers
+
+@*  BzTimeline — a vertical/horizontal list of events, each with a coloured marker,
+    optional time, title and text. Per-item colour is set via the --tl-c variable.  *@
+
+@if (Visible)
+{
+    <div class="bz-tl bz-tl--@(Orientation.ToString().ToLowerInvariant()) bz-tl--@(Variant.ToString().ToLowerInvariant()) @Class"
+         style="@RootStyle()" id="@Id">
+        @for (var i = 0; i < Items.Count; i++)
+        {
+            var item = Items[i];
+            var color = ColorHelper.Var(item.Color);
+            <div class="bz-tl__item" style="--tl-c:@color">
+                <div class="bz-tl__marker">
+                    @if (!string.IsNullOrEmpty(item.Icon))
+                    {
+                        <i class="@item.Icon"></i>
+                    }
+                </div>
+                <div class="bz-tl__content">
+                    <div class="bz-tl__card">
+                        @if (!string.IsNullOrEmpty(item.Time))
+                        {
+                            <div class="bz-tl__time">@item.Time</div>
+                        }
+                        <div class="bz-tl__title">@item.Title</div>
+                        @if (!string.IsNullOrEmpty(item.Text))
+                        {
+                            <div class="bz-tl__text">@item.Text</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>Timeline entries.</summary>
+    [Parameter] public List<BzTimelineItem> Items { get; set; } = new();
+    /// <summary>Vertical (default) or Horizontal.</summary>
+    [Parameter] public BzOrientation Orientation { get; set; } = BzOrientation.Vertical;
+    /// <summary>Visual style.</summary>
+    [Parameter] public BzTimelineVariant Variant { get; set; } = BzTimelineVariant.Default;
+}

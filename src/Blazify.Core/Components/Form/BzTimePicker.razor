@@ -1,0 +1,33 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <div class="bz-time @Class" style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-time__label">@Label</label>
+        }
+        <div class="bz-time__field">
+            <i class="fa-solid fa-clock"></i>
+            <input type="time" value="@Value" disabled="@Disabled" step="@(Seconds ? "1" : null)" @onchange="OnChange" />
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary> "HH:mm" / "HH:mm:ss" => two-way bindable.</summary>
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public string? Label { get; set; }
+    /// <summary>Add seconds for timepicker</summary>
+    [Parameter] public bool Seconds { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    async Task OnChange(ChangeEventArgs e)
+    {
+        Value = e.Value?.ToString();
+        if (ValueChanged.HasDelegate)
+            await ValueChanged.InvokeAsync(Value);
+    }
+}

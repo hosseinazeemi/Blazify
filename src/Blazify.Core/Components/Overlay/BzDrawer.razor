@@ -1,0 +1,58 @@
+@namespace BzCore.Components.Overlay
+@inherits BzComponentBase
+
+@*  BzDrawer — a panel that slides in from an edge, over a backdrop. Clicking the
+    backdrop or the × closes it (by setting Open = false through OpenChanged).  *@
+
+@if (Open)
+{
+    <div class="bz-drawer-root @Class" id="@Id">
+        <div class="bz-drawer__backdrop" @onclick="CloseAsync"></div>
+        <div class="bz-drawer bz-drawer--@(Side.ToString().ToLowerInvariant())" style="@SizeStyle">
+            @if (!string.IsNullOrEmpty(Title) || ShowClose)
+            {
+                <div class="bz-drawer__head">
+                    <span class="bz-drawer__title">@Title</span>
+                    @if (ShowClose)
+                    {
+                        <button class="bz-drawer__close" @onclick="CloseAsync"><i class="fa-solid fa-xmark"></i></button>
+                    }
+                </div>
+            }
+            <div class="bz-drawer__body">@ChildContent</div>
+            @if (Footer is not null)
+            {
+                <div class="bz-drawer__foot">@Footer</div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>Open state (two-way bindable).</summary>
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>Edge the drawer slides in from.</summary>
+    [Parameter] public BzDrawerSide Side { get; set; } = BzDrawerSide.End;
+    /// <summary>Drawer size: width for Start/End, height for Top/Bottom.</summary>
+    [Parameter] public string Size { get; set; } = "320px";
+    /// <summary>Header title.</summary>
+    [Parameter] public string? Title { get; set; }
+    /// <summary>Show the × close button.</summary>
+    [Parameter] public bool ShowClose { get; set; } = true;
+    /// <summary>Drawer body.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Optional footer content.</summary>
+    [Parameter] public RenderFragment? Footer { get; set; }
+
+    // Side/End drawers are sized by width; Top/Bottom by height.
+    private string SizeStyle =>
+        Side is BzDrawerSide.Start or BzDrawerSide.End ? $"width:{Size}" : $"height:{Size}";
+
+    private async Task CloseAsync()
+    {
+        Open = false;
+        if (OpenChanged.HasDelegate) await OpenChanged.InvokeAsync(false);
+    }
+}

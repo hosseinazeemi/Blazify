@@ -1,0 +1,118 @@
+@namespace BzCore.Components.Wizard
+@inherits BzComponentBase
+
+@*  BzWizard — renders the step header, the active step's body and the navigation
+    buttons. Step registration, validation and the Next/Previous/GoTo/Finish API
+    live in BzWizard.razor.cs.  *@
+@using BzCore.Components.Notification
+@using BzCore.Components.Button
+
+@* register steps (no visible DOM) *@
+<CascadingValue Value="this" IsFixed="true">
+    @ChildContent
+</CascadingValue>
+
+@if (Visible)
+{
+    <div class="@RootClass" style="@RootStyle()" id="@Id">
+
+        @if (HeaderContent is not null)
+        {
+            <div class="bz-wizard__header">@HeaderContent</div>
+        }
+
+        <div class="bz-wizard__layout">
+            @* ----- stepper ----- *@
+            <div class="bz-wizard__steps">
+                @for (var i = 0; i < _steps.Count; i++)
+                {
+                    var idx = i;
+                    var step = _steps[i];
+                    <div class="bz-wizard__step @StepState(idx)"
+                         @onclick="@(() => OnStepHeaderClick(idx))">
+                        <div class="bz-wizard__indicator">
+                            @if (idx < ActiveIndex && !step.Disabled)
+                            {
+                                <i class="fa-solid fa-check"></i>
+                            }
+                            else if (!string.IsNullOrEmpty(step.Icon))
+                            {
+                                <i class="@step.Icon"></i>
+                            }
+                            else
+                            {
+                                <span>@(idx + 1)</span>
+                            }
+                        </div>
+                        <div class="bz-wizard__step-text">
+                            <div class="bz-wizard__step-title">
+                                @step.Title
+                                @if (step.Optional)
+                                {
+                                    <span class="bz-wizard__optional">(اختیاری)</span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(step.Subtitle))
+                            {
+                                <div class="bz-wizard__step-sub">@step.Subtitle</div>
+                            }
+                        </div>
+                        @if (idx < _steps.Count - 1)
+                        {
+                            <span class="bz-wizard__connector"></span>
+                        }
+                    </div>
+                }
+            </div>
+
+            @* ----- body ----- *@
+            <div class="bz-wizard__content">
+                @if (!string.IsNullOrEmpty(EffectiveMessage))
+                {
+                    <BzMessage Severity="EffectiveSeverity" Text="@EffectiveMessage" Closable="true"
+                                OnClose="ClearMessagePublic" />
+                }
+
+                <div class="bz-wizard__panel" @key="ActiveIndex">
+                    @if (_steps.Count > 0 && ActiveIndex >= 0 && ActiveIndex < _steps.Count)
+                    {
+                        @_steps[ActiveIndex].ChildContent
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* ----- footer ----- *@
+        @if (FooterContent is not null)
+        {
+            <div class="bz-wizard__footer">@FooterContent</div>
+        }
+        else if (ShowDefaultButtons)
+        {
+            <div class="bz-wizard__footer">
+                <div class="bz-wizard__footer-start">
+                    @if (ShowCancel)
+                    {
+                        <BzButton Text="@CancelText" Variant="BzButtonVariant.Text" Color="BzColor.Secondary"
+                                   OnClick="CancelInternal" />
+                    }
+                </div>
+                <div class="bz-wizard__footer-end">
+                    <BzButton Text="@PrevText" Variant="BzButtonVariant.Outlined"
+                               Disabled="IsFirst" StartIcon="fa-solid fa-angle-right"
+                               OnClick="PrevInternal" />
+                    @if (IsLast)
+                    {
+                        <BzButton Text="@FinishText" Color="BzColor.Success"
+                                   StartIcon="fa-solid fa-flag-checkered" OnClick="FinishInternal" />
+                    }
+                    else
+                    {
+                        <BzButton Text="@NextText" Color="BzColor.Primary"
+                                   EndIcon="fa-solid fa-angle-left" OnClick="NextInternal" />
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

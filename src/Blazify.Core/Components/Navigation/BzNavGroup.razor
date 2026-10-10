@@ -1,0 +1,16 @@
+@namespace BzCore.Components.Navigation
+@inherits ComponentBase
+
+<div class="bz-nav-group">
+    @if (!string.IsNullOrEmpty(Title) && !(Sidebar?.IsCollapsed ?? false))
+    {
+        <div class="bz-nav-group__title">@Title</div>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter] internal BzSidebar? Sidebar { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

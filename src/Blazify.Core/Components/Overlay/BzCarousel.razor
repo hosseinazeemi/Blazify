@@ -1,0 +1,113 @@
+@namespace BzCore.Components.Overlay
+@inherits BzComponentBase
+@inject IJSRuntime JS
+
+@if (Visible)
+{
+    <div class="bz-carousel-wrap @Class" style="@RootStyle()">
+        <div class="swiper bz-carousel bz-carousel--@(Effect.ToString().ToLowerInvariant())" id="@_id">
+            <div class="swiper-wrapper">
+                @foreach (var slide in Slides)
+                {
+                    <div class="swiper-slide">@slide</div>
+                }
+            </div>
+            @if (Pagination) { <div class="swiper-pagination"></div> }
+            @if (Navigation) { <div class="swiper-button-next"></div><div class="swiper-button-prev"></div> }
+        </div>
+
+        @if (Thumbnails)
+        {
+            <div class="swiper bz-carousel__thumbs" id="@_thumbId">
+                <div class="swiper-wrapper">
+                    @foreach (var slide in Slides)
+                    {
+                        <div class="swiper-slide">@slide</div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>The slides to display.</summary>
+    [Parameter] public List<RenderFragment> Slides { get; set; } = new();
+    /// <summary>Show the pagination indicator.</summary>
+    [Parameter] public bool Pagination { get; set; } = true;
+    /// <summary>Show prev/next arrows.</summary>
+    [Parameter] public bool Navigation { get; set; } = true;
+    /// <summary>Loop back to the start after the last slide (slide/coverflow only).</summary>
+    [Parameter] public bool Loop { get; set; } = true;
+    /// <summary>Autoplay delay in ms; 0 disables autoplay.</summary>
+    [Parameter] public int Autoplay { get; set; } = 0;
+    /// <summary>Slides visible at once (slide/coverflow only).</summary>
+    [Parameter] public int PerView { get; set; } = 1;
+    /// <summary>Gap between slides in px.</summary>
+    [Parameter] public int Gap { get; set; } = 16;
+    /// <summary>Transition effect (Slide, Fade, Coverflow, Cards…).</summary>
+    [Parameter] public BzCarouselEffect Effect { get; set; } = BzCarouselEffect.Slide;
+    /// <summary>Pagination style (Bullets, Progressbar, Fraction, Dynamic).</summary>
+    [Parameter] public BzPaginationType PaginationType { get; set; } = BzPaginationType.Bullets;
+    /// <summary>Center the active slide.</summary>
+    [Parameter] public bool Centered { get; set; }
+    /// <summary>Show a secondary thumbnail strip synced to the main carousel.</summary>
+    [Parameter] public bool Thumbnails { get; set; }
+
+    private readonly string _id = "carousel" + Guid.NewGuid().ToString("N")[..8];
+    private readonly string _thumbId = "thumbs" + Guid.NewGuid().ToString("N")[..8];
+    private bool _inited;
+
+    protected override bool ShouldRender() => !_inited;
+
+    private bool MultiAllowed => Effect is BzCarouselEffect.Slide or BzCarouselEffect.Coverflow;
+
+    protected override async Task OnAfterRenderAsync(bool first)
+    {
+        if (!first) return;
+        _inited = true;
+
+        var effect = Effect.ToString().ToLowerInvariant();
+        var pagType = PaginationType switch
+        {
+            BzPaginationType.Progressbar => "progressbar",
+            BzPaginationType.Fraction => "fraction",
+            _ => "bullets"
+        };
+
+        var canLoop = Loop && (Effect is BzCarouselEffect.Slide or BzCarouselEffect.Coverflow);
+
+        object opts = new
+        {
+            effect,
+            loop = canLoop,
+            observer = true,
+            observeParents = true,
+            centeredSlides = Centered || Effect == BzCarouselEffect.Coverflow,
+            slidesPerView = MultiAllowed ? PerView : 1,
+            spaceBetween = Gap,
+            grabCursor = true,
+            autoHeight = Effect == BzCarouselEffect.Fade,
+            coverflowEffect = Effect == BzCarouselEffect.Coverflow
+                ? new { rotate = 35, stretch = 0, depth = 120, modifier = 1, slideShadows = true } : null,
+            cardsEffect = Effect == BzCarouselEffect.Cards ? new { perSlideOffset = 8, perSlideRotate = 2 } : null,
+            fadeEffect = Effect == BzCarouselEffect.Fade ? new { crossFade = true } : null,
+            pagination = Pagination
+                ? new { el = $"#{_id} .swiper-pagination", clickable = true, type = pagType, dynamicBullets = PaginationType == BzPaginationType.Dynamic }
+                : null,
+            navigation = Navigation
+                ? new { nextEl = $"#{_id} .swiper-button-next", prevEl = $"#{_id} .swiper-button-prev" } : null,
+            autoplay = Autoplay > 0 ? new { delay = Autoplay, disableOnInteraction = false } : (object?)null
+        };
+
+        if (Thumbnails)
+        {
+            object thumbOpts = new { slidesPerView = Math.Max(PerView, 4), spaceBetween = 8, watchSlidesProgress = true, freeMode = true };
+            await JS.InvokeVoidAsync("bzSwiper.initEx", $"#{_id}", opts, $"#{_thumbId}", thumbOpts);
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("bzSwiper.init", $"#{_id}", opts);
+        }
+    }
+}

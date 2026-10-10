@@ -1,0 +1,37 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <div class="bz-rating @(ReadOnly ? "is-readonly" : "") @Class" style="@RootStyle()" id="@Id">
+        @for (int i = 1; i <= Max; i++)
+        {
+            var idx = i;
+            <button type="button" class="bz-rating__star @(idx <= (_hover ?? Value) ? "is-on" : "")"
+                    disabled="@ReadOnly"
+                    @onclick="@(() => Set(idx))"
+                    @onmouseover="@(() => { if (!ReadOnly) _hover = idx; })"
+                    @onmouseout="@(() => _hover = null)">
+                <i class="@Icon"></i>
+            </button>
+        }
+        @if (ShowValue) { <span class="bz-rating__val">@Value / @Max</span> }
+    </div>
+}
+
+@code {
+    [Parameter] public int Value { get; set; }
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+    [Parameter] public int Max { get; set; } = 5;
+    [Parameter] public string Icon { get; set; } = "fa-solid fa-star";
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public bool ShowValue { get; set; }
+
+    private int? _hover;
+
+    async Task Set(int v)
+    {
+        Value = v == Value ? 0 : v;
+        if (ValueChanged.HasDelegate) await ValueChanged.InvokeAsync(Value);
+    }
+}

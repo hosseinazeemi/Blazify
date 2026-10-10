@@ -1,0 +1,29 @@
+/* ====================  BzMessage (inline alert)  ==================== */
+.bz-message {
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+    padding: .85rem 1rem;
+    border: var(--bz-border-width, 1px) solid color-mix(in srgb, var(--mc) 35%, var(--bz-border));
+    border-inline-start: 4px solid var(--mc);
+    border-radius: var(--bz-radius, 10px);
+    background: color-mix(in srgb, var(--mc) 8%, var(--bz-surface));
+    font-family: var(--bz-font-family);
+    animation: bz-fade-in var(--bz-transition);
+}
+.bz-message--success { --mc: var(--bz-success); }
+.bz-message--info    { --mc: var(--bz-info); }
+.bz-message--warning { --mc: var(--bz-warning); }
+.bz-message--error   { --mc: var(--bz-danger); }
+
+.bz-message__icon { color: var(--mc); font-size: 1.1rem; margin-top: .1rem; }
+.bz-message__body { flex: 1 1 auto; min-width: 0; }
+.bz-message__title { font-weight: 700; font-size: 13.5px; margin-bottom: .15rem; color: var(--bz-text); }
+.bz-message__text { font-size: 13px; color: var(--bz-text); line-height: 1.7; }
+
+.bz-message__close {
+    border: none; background: transparent; color: var(--bz-text-muted);
+    width: 24px; height: 24px; border-radius: 50%; cursor: pointer; flex: 0 0 auto;
+    transition: background-color var(--bz-transition-fast);
+}
+.bz-message__close:hover { background: color-mix(in srgb, var(--mc) 18%, transparent); color: var(--mc); }

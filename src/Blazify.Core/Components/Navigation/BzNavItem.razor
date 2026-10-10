@@ -1,0 +1,119 @@
+@namespace BzCore.Components.Navigation
+@inherits ComponentBase
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+
+@{
+    var collapsed   = Sidebar?.IsCollapsed ?? false;
+    var hasChildren = ChildContent is not null;
+
+    var indentRem = 0.9 + Level * 0.85;
+    var padStart  = collapsed ? "0rem" : $"{indentRem.ToString(System.Globalization.CultureInfo.InvariantCulture)}rem";
+    var rowStyle  = $"padding-inline-start:{padStart}";
+}
+
+<div class="bz-nav-item @(hasChildren ? "has-children" : "") @(_open ? "is-open" : "")">
+    @if (hasChildren)
+    {
+        <button type="button" class="bz-nav-item__row" disabled="@Disabled"
+                style="@rowStyle" @onclick="Toggle">
+            @Indicator(collapsed)
+            @if (!collapsed)
+            {
+                <span class="bz-nav-item__label">@Text</span>
+                @Badge(collapsed)
+                <i class="fa-solid fa-angle-down bz-nav-item__chevron"></i>
+            }
+        </button>
+
+        @if (!collapsed)
+        {
+            <div class="bz-nav-item__sub">
+                <div class="bz-nav-item__sub-inner">
+                    <CascadingValue Name="BzNavLevel" Value="Level + 1" IsFixed="true">
+                        @ChildContent
+                    </CascadingValue>
+                </div>
+            </div>
+        }
+    }
+    else if (!string.IsNullOrEmpty(Href))
+    {
+        <NavLink class="bz-nav-item__row" href="@Href" Match="Match" style="@rowStyle">
+            @Indicator(collapsed)
+            @if (!collapsed)
+            {
+                <span class="bz-nav-item__label">@Text</span>
+                @Badge(collapsed)
+            }
+        </NavLink>
+    }
+    else
+    {
+        <button type="button" class="bz-nav-item__row" disabled="@Disabled"
+                style="@rowStyle" @onclick="HandleClick">
+            @Indicator(collapsed)
+            @if (!collapsed)
+            {
+                <span class="bz-nav-item__label">@Text</span>
+                @Badge(collapsed)
+            }
+        </button>
+    }
+</div>
+
+@code {
+    [CascadingParameter] internal BzSidebar? Sidebar { get; set; }
+    [CascadingParameter(Name = "BzNavLevel")] public int Level { get; set; }
+
+    /// <summary>Display name or title</summary>
+    [Parameter] public string? Text { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    /// <summary>Link target, When set and no children, the row is a NavLink</summary>
+    [Parameter] public string? Href { get; set; }
+    /// <summary>NavLink active-match rule</summary>
+    [Parameter] public NavLinkMatch Match { get; set; } = NavLinkMatch.Prefix;
+    /// <summary>Optional badge text</summary>
+    [Parameter] public string? BadgeText { get; set; }
+    /// <summary>Disable the row</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Start expanded (parent rows only)</summary>
+    [Parameter] public bool Expanded { get; set; }
+    /// <summary>Nested rows, which make this a parent.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Click handler (for single menu without child).</summary>
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    private bool _open;
+
+    protected override void OnInitialized() => _open = Expanded;
+
+    private void Toggle() { if (!Disabled) _open = !_open; }
+
+    private async Task HandleClick(MouseEventArgs e)
+    {
+        if (!Disabled && OnClick.HasDelegate) await OnClick.InvokeAsync(e);
+    }
+
+    private RenderFragment Indicator(bool collapsed) => __builder =>
+    {
+        <span class="bz-nav-item__icon" title="@(collapsed ? Text : null)">
+            @if (!string.IsNullOrEmpty(Icon))
+            {
+                <i class="@Icon"></i>
+            }
+            else
+            {
+                <i class="fa-solid fa-circle bz-nav-item__dot"></i>
+            }
+        </span>
+    };
+
+    private RenderFragment Badge(bool collapsed) => __builder =>
+    {
+        @if (!string.IsNullOrEmpty(BadgeText) && !collapsed)
+        {
+            <span class="bz-nav-item__badge">@BadgeText</span>
+        }
+    };
+}

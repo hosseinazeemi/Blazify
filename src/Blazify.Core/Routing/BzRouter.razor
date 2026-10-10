@@ -1,0 +1,109 @@
+@namespace BzCore.Routing
+@implements IDisposable
+@inject NavigationManager Nav
+@inject IServiceProvider Services
+@inject BzRouteTable Table
+@using Microsoft.AspNetCore.Components.Routing
+@using System.Globalization
+
+@* Drop-in replacement for <Router>. Blazor's own Router keeps its route table and
+   matching internal, and reimplementing that is where subtle bugs live — so we
+   wrap it and layer the missing pieces (guards, loaders, metadata, breadcrumbs,
+   transitions) on top instead. *@
+
+<Router AppAssembly="@AppAssembly" AdditionalAssemblies="@AdditionalAssemblies">
+    <Found Context="routeData">
+        <BzRouteView RouteData="@routeData"
+                     DefaultLayout="@DefaultLayout"
+                     Loading="@Loading"
+                     ErrorContent="@ErrorContent"
+                     Denied="@Denied"
+                     RouteViewTemplate="@RouteViewTemplate"
+                     Transition="@Transition"
+                     ApplyDocumentTitle="@ApplyDocumentTitle" />
+    </Found>
+    <NotFound>
+        @if (NotFound is not null)
+        {
+            @NotFound
+        }
+        else
+        {
+            <LayoutView Layout="@DefaultLayout">
+                <div class="bz-route-empty">
+                    <i class="fa-solid fa-compass"></i>
+                    <h2>404</h2>
+                    <p>@(IsFa ? "صفحه ای که دنبالش هستید پیدا نشد." : "We could not find that page.")</p>
+                    <a href="/">@(IsFa ? "بازگشت به خانه" : "Back home")</a>
+                </div>
+            </LayoutView>
+        }
+    </NotFound>
+</Router>
+
+@code {
+    /// <summary>Assembly to scan for routable components. Same as Blazor's Router.</summary>
+    [Parameter, EditorRequired] public System.Reflection.Assembly AppAssembly { get; set; } = default!;
+
+    /// <summary>Extra assemblies to scan.</summary>
+    [Parameter] public IEnumerable<System.Reflection.Assembly>? AdditionalAssemblies { get; set; }
+
+    /// <summary>Layout used when a page does not declare one.</summary>
+    [Parameter] public Type? DefaultLayout { get; set; }
+
+    /// <summary>Rendered while a route loader is running. A tasteful default is used when null.</summary>
+    [Parameter] public RenderFragment? Loading { get; set; }
+
+    /// <summary>Rendered when a loader throws. Receives the exception.</summary>
+    [Parameter] public RenderFragment<Exception>? ErrorContent { get; set; }
+
+    /// <summary>Rendered when a guard denies the page. Receives the guard's reason.</summary>
+    [Parameter] public RenderFragment<string?>? Denied { get; set; }
+
+    /// <summary>Rendered when no route matches.</summary>
+    [Parameter] public RenderFragment? NotFound { get; set; }
+
+    /// <summary>
+    /// Renders the matched page. Supply it to plug in AuthorizeRouteView (or any other
+    /// route view); leave it null to use Blazor's plain RouteView.
+    /// </summary>
+    /// <remarks>
+    /// Keeping this a template is what lets Blazify stay free of a dependency on
+    /// Microsoft.AspNetCore.Components.Authorization. Your app already references that
+    /// package when it needs it — the library should not force it on everyone else.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// &lt;BzRouter AppAssembly="@typeof(Program).Assembly" DefaultLayout="@typeof(MainLayout)"&gt;
+    ///     &lt;RouteViewTemplate Context="routeData"&gt;
+    ///         &lt;AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"&gt;
+    ///             &lt;NotAuthorized&gt;&lt;RedirectToLogin /&gt;&lt;/NotAuthorized&gt;
+    ///         &lt;/AuthorizeRouteView&gt;
+    ///     &lt;/RouteViewTemplate&gt;
+    /// &lt;/BzRouter&gt;
+    /// </code>
+    /// </example>
+    [Parameter] public RenderFragment<RouteData>? RouteViewTemplate { get; set; }
+
+    /// <summary>Cross-page transition. Opacity only — see BzRouteView for why.</summary>
+    [Parameter] public BzRouteTransition Transition { get; set; } = BzRouteTransition.Fade;
+
+    /// <summary>
+    /// When true the document title is set from <see cref="BzRouteAttribute.Title"/>,
+    /// so pages do not each need a &lt;PageTitle&gt;.
+    /// </summary>
+    [Parameter] public bool ApplyDocumentTitle { get; set; } = true;
+
+    private static bool IsFa => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName
+        .Equals("fa", StringComparison.OrdinalIgnoreCase);
+
+    protected override void OnInitialized()
+    {
+        // Make the route table available to menus, breadcrumbs and sitemaps.
+        Table.Load(AppAssembly);
+        if (AdditionalAssemblies is not null)
+            Table.Load(AdditionalAssemblies.ToArray());
+    }
+
+    public void Dispose() { }
+}

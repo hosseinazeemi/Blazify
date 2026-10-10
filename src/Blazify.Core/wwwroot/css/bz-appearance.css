@@ -1,0 +1,151 @@
+/* ============================================================
+   Appearance languages.
+   Base radius/shadow come from BzTheme.WithAppearance();
+   these rules add the per-style personality.
+   ============================================================ */
+
+/* ============================================================
+   MODERN — soft, airy (default; kept clean)
+   ============================================================ */
+.bz-appearance-modern .bz-input__field { backdrop-filter: saturate(1.05); }
+
+/* ============================================================
+   رسمی / OFFICIAL — formal, restrained, max 6px radius
+   crisp hairlines, serious typography, understated accents
+   ============================================================ */
+.bz-appearance-official {
+    --bz-focus-ring: color-mix(in srgb, var(--bz-primary) 18%, transparent);
+}
+.bz-appearance-official .bz-btn { border-radius: 6px; font-weight: 600; letter-spacing: .2px; }
+.bz-appearance-official .bz-btn--filled { box-shadow: none; }
+.bz-appearance-official .bz-btn--outlined { border-width: 1px; }
+.bz-appearance-official .bz-input__field {
+    border-radius: 6px; background: var(--bz-surface);
+    border: 1px solid color-mix(in srgb, var(--bz-text-muted) 38%, transparent);
+}
+.bz-appearance-official .bz-input__field:focus-within {
+    border-color: var(--bz-primary); box-shadow: 0 0 0 3px var(--bz-focus-ring);
+}
+.bz-appearance-official .bz-input__label { font-weight: 600; letter-spacing: .2px; }
+/* serious card with a thin top rule */
+.bz-appearance-official .bz-card,
+.bz-appearance-official .bz-grid-wrap {
+    border-radius: 6px; border: 1px solid var(--bz-border); box-shadow: none;
+}
+.bz-appearance-official .bz-card { border-top: 3px solid var(--bz-primary); }
+.bz-appearance-official .bz-grid thead th {
+    background: var(--bz-surface-muted); border-bottom: 2px solid var(--bz-border);
+    text-transform: none; font-weight: 700; letter-spacing: .2px;
+}
+.bz-appearance-official h2 { border-bottom: 1px solid var(--bz-border); padding-bottom: .4rem; }
+
+/* ============================================================
+   گیمینگ / GAMING — epic WoW / Battle.net vibe, max 4px radius
+   dark metallic panels, gold accents, beveled borders, glow
+   ============================================================ */
+.bz-appearance-gaming {
+    --bz-gold: #f0c75e;
+    --bz-gold-deep: #b8860b;
+    --bz-focus-ring: rgba(240,199,94,.35);
+}
+.bz-appearance-gaming .bz-btn {
+    border-radius: 4px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase;
+    border: 2px solid var(--bz-gold-deep);
+    background-image: linear-gradient(180deg, color-mix(in srgb,var(--white) 16%, transparent), rgba(0,0,0,.25));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -2px 6px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.5);
+    text-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+.bz-appearance-gaming .bz-btn--filled {
+    background-color: var(--bz-primary);
+    border-color: var(--bz-gold);
+}
+.bz-appearance-gaming .bz-btn:hover:not(:disabled) {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 0 14px var(--bz-gold), 0 2px 6px rgba(0,0,0,.6);
+    border-color: var(--bz-gold);
+}
+.bz-appearance-gaming .bz-input__field {
+    border-radius: 4px; border: 2px solid color-mix(in srgb, var(--bz-gold-deep) 60%, var(--bz-border));
+    background: color-mix(in srgb, var(--black) 18%, var(--bz-surface));
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.45);
+}
+.bz-appearance-gaming .bz-input__field:focus-within {
+    border-color: var(--bz-gold); box-shadow: inset 0 2px 6px rgba(0,0,0,.45), 0 0 0 3px var(--bz-focus-ring);
+}
+.bz-appearance-gaming .bz-input__label { text-transform: uppercase; letter-spacing: .6px; font-weight: 800; color: var(--bz-gold); }
+/* mythic panels: double-bevel border + corner glow */
+.bz-appearance-gaming .bz-card,
+.bz-appearance-gaming .bz-grid-wrap,
+.bz-appearance-gaming .bz-wizard,
+.bz-appearance-gaming .bz-sidebar {
+    border-radius: 4px;
+    border: 2px solid var(--bz-gold-deep);
+    background-image: linear-gradient(180deg, color-mix(in srgb,var(--white) 6%, transparent), transparent);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.35), 0 6px 20px rgba(0,0,0,.5);
+}
+.bz-appearance-gaming .bz-card__title,
+.bz-appearance-gaming h1, .bz-appearance-gaming h2 {
+    color: var(--bz-gold); text-shadow: 0 1px 3px rgba(0,0,0,.6); letter-spacing: .5px;
+}
+.bz-appearance-gaming .bz-grid thead th {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bz-gold-deep) 35%, var(--bz-surface)), var(--bz-surface));
+    color: var(--bz-gold); text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid var(--bz-gold-deep);
+}
+.bz-appearance-gaming .bz-tabs--pills .bz-tabs__tab.is-active {
+    background: var(--bz-primary); border: 1px solid var(--bz-gold); box-shadow: 0 0 12px var(--bz-focus-ring);
+}
+
+/* ============================================================
+   شرکتی / CORPORATE — premium SaaS admin (Vuexy-like)
+   layered soft shadows, gradient accents, glassy headers
+   ============================================================ */
+.bz-appearance-corporate {
+    --bz-focus-ring: color-mix(in srgb, var(--bz-primary) 22%, transparent);
+}
+.bz-appearance-corporate .bz-btn { border-radius: 8px; font-weight: 700; }
+.bz-appearance-corporate .bz-btn--filled {
+    background-image: linear-gradient(180deg, color-mix(in srgb,var(--white) 16%, transparent), transparent);
+    box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--bz-primary) 55%, transparent);
+}
+.bz-appearance-corporate .bz-btn--filled:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px -6px color-mix(in srgb, var(--bz-primary) 60%, transparent);
+}
+.bz-appearance-corporate .bz-input__field {
+    border-radius: 8px; background: var(--bz-surface);
+    border: 1px solid color-mix(in srgb, var(--bz-border) 80%, transparent);
+    transition: border-color .2s, box-shadow .2s;
+}
+.bz-appearance-corporate .bz-input__field:focus-within {
+    border-color: color-mix(in srgb, var(--bz-primary) 55%, var(--bz-border));
+    box-shadow: 0 0 0 4px var(--bz-focus-ring);
+}
+.bz-appearance-corporate .bz-input__label { font-weight: 700; font-size: 12.5px; }
+/* premium cards: soft layered shadow + subtle gradient top */
+.bz-appearance-corporate .bz-card,
+.bz-appearance-corporate .bz-grid-wrap,
+.bz-appearance-corporate .bz-wizard {
+    border-radius: 14px; border: 1px solid color-mix(in srgb, var(--bz-border) 60%, transparent);
+    box-shadow: 0 2px 6px -1px rgba(34,41,47,.08), 0 12px 28px -16px rgba(34,41,47,.25);
+}
+.bz-appearance-corporate .bz-stat-card {
+    background-image: radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--bz-primary) 10%, transparent), transparent 60%);
+}
+.bz-appearance-corporate .bz-grid thead th {
+    background: color-mix(in srgb, var(--bz-primary) 6%, var(--bz-surface)); font-weight: 700;
+    color: var(--bz-text);
+}
+.bz-appearance-corporate .bz-tabs--pills .bz-tabs__tab.is-active {
+    background: var(--bz-primary); color: var(--bz-on-primary);
+    box-shadow: 0 6px 14px -4px color-mix(in srgb, var(--bz-primary) 60%, transparent);
+}
+.bz-appearance-corporate h2 { position: relative; padding-inline-start: .85rem; }
+.bz-appearance-corporate h2::before {
+    content: ""; position: absolute; inset-inline-start: 0; top: 50%; transform: translateY(-50%);
+    width: 4px; height: 1.15em; border-radius: 4px;
+    background: linear-gradient(var(--bz-primary), color-mix(in srgb, var(--bz-primary) 35%, var(--bz-info)));
+}
+.bz-appearance-corporate .bz-toast,
+.bz-appearance-corporate .bz-menu__dropdown,
+.bz-appearance-corporate .bz-fab__panel {
+    box-shadow: 0 16px 40px -12px rgba(34,41,47,.3); border-radius: 14px;
+}

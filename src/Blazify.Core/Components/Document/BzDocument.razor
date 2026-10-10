@@ -1,0 +1,162 @@
+@namespace BzCore.Components.Document
+@inherits Blazify.Core.Base.BzComponentBase
+
+@if (Visible)
+{
+    @* All geometry comes from C#, so the preview and the @page rule can never drift. *@
+    @PageStyle
+
+    <div class="@RootCss("bz-doc").AddIf(PrintBackgrounds, "bz-doc--exact-color").Build()"
+         style="@RootStyle().Build()" id="@Id" dir="@DirAttr">
+
+        @if (HasToolbar)
+        {
+            <div class="bz-doc__toolbar">
+
+                @if (Has(BzDocTools.Print))
+                {
+                    <button type="button" class="bz-doc__btn bz-doc__btn--primary" @onclick="PrintAsync">
+                        <i class="fa-solid fa-print"></i>
+                        <span>@(Fa ? "چاپ / ذخیره PDF" : "Print / Save PDF")</span>
+                    </button>
+                }
+
+                @if (Has(BzDocTools.Zoom))
+                {
+                    <div class="bz-doc__group">
+                        <button type="button" class="bz-doc__btn" title="@(Fa ? "کوچک نمایی" : "Zoom out")"
+                                @onclick="@(() => Zoom(-10))">
+                            <i class="fa-solid fa-magnifying-glass-minus"></i>
+                        </button>
+                        <button type="button" class="bz-doc__zoom" @onclick="ZoomReset"
+                                title="@(Fa ? "بازنشانی" : "Reset")">
+                            @(_zoom)%
+                        </button>
+                        <button type="button" class="bz-doc__btn" title="@(Fa ? "بزرگ نمایی" : "Zoom in")"
+                                @onclick="@(() => Zoom(10))">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i>
+                        </button>
+                    </div>
+                }
+
+                @if (Has(BzDocTools.PageSize))
+                {
+                    <div class="bz-doc__dd">
+                        <button type="button" class="bz-doc__btn" @onclick="@(() => ToggleMenu("size"))">
+                            <i class="fa-regular fa-file"></i>
+                            <span>@SizeLabel(_size)</span>
+                            <i class="fa-solid fa-chevron-down bz-doc__caret"></i>
+                        </button>
+                        @if (_menu == "size")
+                        {
+                            <div class="bz-doc__menu">
+                                @foreach (var s in SizeOptions)
+                                {
+                                    <button type="button" class="bz-doc__mi @(_size == s ? "is-active" : "")"
+                                            @onclick="@(() => SetSize(s))">
+                                        @SizeLabel(s)
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (Has(BzDocTools.Orientation))
+                {
+                    <div class="bz-doc__group">
+                        <button type="button" class="bz-doc__btn @(_orientation == BzPageOrientation.Portrait ? "is-active" : "")"
+                                title="@(Fa ? "عمودی" : "Portrait")"
+                                @onclick="@(() => SetOrientation(BzPageOrientation.Portrait))">
+                            <i class="fa-regular fa-file"></i>
+                        </button>
+                        <button type="button" class="bz-doc__btn @(_orientation == BzPageOrientation.Landscape ? "is-active" : "")"
+                                title="@(Fa ? "افقی" : "Landscape")"
+                                @onclick="@(() => SetOrientation(BzPageOrientation.Landscape))">
+                            <i class="fa-regular fa-file bz-doc__rot"></i>
+                        </button>
+                    </div>
+                }
+
+                @if (Has(BzDocTools.Margins))
+                {
+                    <div class="bz-doc__dd">
+                        <button type="button" class="bz-doc__btn" @onclick="@(() => ToggleMenu("margin"))">
+                            <i class="fa-solid fa-border-none"></i>
+                            <span>@(Fa ? "حاشیه" : "Margins")</span>
+                            <i class="fa-solid fa-chevron-down bz-doc__caret"></i>
+                        </button>
+                        @if (_menu == "margin")
+                        {
+                            <div class="bz-doc__menu">
+                                @foreach (var m in Margins)
+                                {
+                                    <button type="button" class="bz-doc__mi @(_margin == m.Value ? "is-active" : "")"
+                                            @onclick="@(() => SetMargin(m.Value))">
+                                        <span>@m.Label</span>
+                                        <small>@m.Value</small>
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (Has(BzDocTools.Watermark) && !string.IsNullOrWhiteSpace(Watermark))
+                {
+                    <button type="button" class="bz-doc__btn @(_showWatermark ? "is-active" : "")"
+                            title="@(Fa ? "واترمارک" : "Watermark")" @onclick="ToggleWatermark">
+                        <i class="fa-solid fa-stamp"></i>
+                    </button>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(FileName))
+                {
+                    <span class="bz-doc__file" title="@(Fa ? "نام پیشنهادی فایل" : "Suggested file name")">
+                        <i class="fa-regular fa-file-pdf"></i> @(FileName).pdf
+                    </span>
+                }
+            </div>
+
+            @if (_menu is not null)
+            {
+                <div class="bz-doc__backdrop" @onclick="@(() => _menu = null)"></div>
+            }
+        }
+
+        <div class="bz-doc__stage">
+
+            @if (Cover is not null)
+            {
+                <article class="bz-doc__paper bz-doc__paper--cover">
+                    @if (!string.IsNullOrWhiteSpace(Watermark) && _showWatermark)
+                    {
+                        <div class="bz-doc__watermark" aria-hidden="true"><span>@Watermark</span></div>
+                    }
+                    <div class="bz-doc__cover-body">@Cover</div>
+                </article>
+            }
+
+            <article class="bz-doc__paper">
+                @if (!string.IsNullOrWhiteSpace(Watermark) && _showWatermark)
+                {
+                    <div class="bz-doc__watermark" aria-hidden="true"><span>@Watermark</span></div>
+                }
+
+                @if (Header is not null)
+                {
+                    <header class="bz-doc__running bz-doc__running--top">@Header</header>
+                }
+
+                <div class="bz-doc__content">
+                    @ChildContent
+                </div>
+
+                @if (Footer is not null)
+                {
+                    <footer class="bz-doc__running bz-doc__running--bottom">@Footer</footer>
+                }
+            </article>
+        </div>
+    </div>
+}

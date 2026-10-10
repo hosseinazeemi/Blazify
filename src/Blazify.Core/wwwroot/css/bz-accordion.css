@@ -1,0 +1,69 @@
+/* ====================  BzAccordion (global; styles items across components)  ==================== */
+.bz-acc { font-family: var(--bz-font-family); width: 100%; display: flex; flex-direction: column; }
+
+.bz-acc__item { background: var(--bz-surface); overflow: hidden; }
+.bz-acc__header {
+    width: 100%; display: flex; align-items: center; gap: .7rem;
+    padding: .95rem 1.1rem; border: none; background: transparent; cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 600; color: var(--bz-text); text-align: start;
+    transition: background-color var(--bz-transition-fast), color var(--bz-transition-fast);
+}
+.bz-acc__header:hover:not(:disabled) { background: color-mix(in srgb, var(--bz-primary) 6%, var(--bz-surface)); }
+.bz-acc__item.is-disabled { opacity: .55; }
+.bz-acc__item.is-disabled .bz-acc__header { cursor: not-allowed; }
+.bz-acc__lead { color: var(--bz-primary); width: 20px; text-align: center; }
+.bz-acc__title { flex: 1 1 auto; }
+.bz-acc__header-extra { color: var(--bz-text-muted); font-weight: 400; font-size: 12.5px; }
+.bz-acc__chevron {
+    color: var(--bz-text-muted); transition: color var(--bz-transition-fast), background var(--bz-transition-fast);
+    width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; flex: 0 0 auto;
+}
+.bz-acc__chevron i { display: block; line-height: 1; transition: transform var(--bz-transition); transform-origin: 50% 50%; }
+.bz-acc__item.is-open .bz-acc__chevron { color: var(--bz-primary); background: color-mix(in srgb, var(--bz-primary) 12%, transparent); }
+.bz-acc__item.is-open .bz-acc__chevron i { transform: rotate(180deg); }
+
+/* smooth height animation via grid-template-rows 0fr -> 1fr */
+.bz-acc__panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--bz-transition); }
+.bz-acc__item.is-open .bz-acc__panel { grid-template-rows: 1fr; }
+.bz-acc__panel-inner { overflow: hidden; }
+.bz-acc__body { padding: 0 1.1rem 1.1rem; color: var(--bz-text); line-height: 1.8; font-weight: 400; font-size: 13.5px; }
+
+/* ---------- variants ---------- */
+
+/* Default: clean card with subtle separators */
+.bz-acc--default { gap: 0; border: 1px solid var(--bz-border); border-radius: var(--bz-radius-lg); overflow: hidden; }
+.bz-acc--default .bz-acc__item + .bz-acc__item { border-top: 1px solid var(--bz-border); }
+.bz-acc--default .bz-acc__item.is-open { background: color-mix(in srgb, var(--bz-primary) 4%, var(--bz-surface)); }
+
+/* Separated: each item is its own floating card */
+.bz-acc--separated { gap: .6rem; }
+.bz-acc--separated .bz-acc__item { border: 1px solid var(--bz-border); border-radius: var(--bz-radius); box-shadow: var(--bz-shadow); }
+.bz-acc--separated .bz-acc__item.is-open { border-color: color-mix(in srgb, var(--bz-primary) 40%, var(--bz-border)); }
+
+/* Bordered: strong outline, accent bar on open */
+.bz-acc--bordered { gap: 0; border: 2px solid var(--bz-border); border-radius: var(--bz-radius-lg); overflow: hidden; }
+.bz-acc--bordered .bz-acc__item + .bz-acc__item { border-top: 2px solid var(--bz-border); }
+.bz-acc--bordered .bz-acc__item.is-open .bz-acc__header { box-shadow: inset 3px 0 0 var(--bz-primary); color: var(--bz-primary); }
+
+/* Filled: tinted headers */
+.bz-acc--filled { gap: .5rem; }
+.bz-acc--filled .bz-acc__item { border-radius: var(--bz-radius); border: 1px solid transparent; }
+.bz-acc--filled .bz-acc__header { background: var(--bz-surface-muted); }
+.bz-acc--filled .bz-acc__item.is-open .bz-acc__header { background: color-mix(in srgb, var(--bz-primary) 14%, transparent); color: var(--bz-primary); }
+.bz-acc--filled .bz-acc__item.is-open { border-color: color-mix(in srgb, var(--bz-primary) 25%, transparent); }
+
+/* Minimal: flush, only bottom rule */
+.bz-acc--minimal { gap: 0; }
+.bz-acc--minimal .bz-acc__item { border-bottom: 1px solid var(--bz-border); }
+.bz-acc--minimal .bz-acc__header { padding-inline: .25rem; }
+.bz-acc--minimal .bz-acc__body { padding-inline: .25rem; }
+
+/* ---------- horizontal ---------- */
+.bz-acc--horizontal { flex-direction: row; align-items: stretch; gap: .5rem; }
+.bz-acc--horizontal .bz-acc__item { flex: 0 0 auto; display: flex; flex-direction: column; border: 1px solid var(--bz-border); border-radius: var(--bz-radius); }
+.bz-acc--horizontal .bz-acc__item.is-open { flex: 1 1 auto; }
+.bz-acc--horizontal .bz-acc__panel { grid-template-rows: 1fr; }
+.bz-acc--horizontal .bz-acc__item:not(.is-open) .bz-acc__panel { display: none; }
+.bz-acc--horizontal .bz-acc__chevron i { transform: rotate(-90deg); }
+.bz-acc--horizontal .bz-acc__item.is-open .bz-acc__chevron i { transform: rotate(0deg); }

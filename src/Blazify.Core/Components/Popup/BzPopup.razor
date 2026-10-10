@@ -1,0 +1,22 @@
+@namespace BzCore.Components.Popup
+@inherits BzComponentBase
+
+@*  BzPopup — a click-triggered floating panel. The trigger toggles it; clicking
+    the backdrop closes it. Placement/state logic is in BzPopup.razor.cs.  *@
+
+@if (Visible)
+{
+    <div class="bz-popup @Class" style="@RootStyle()" id="@Id">
+        <div class="bz-popup__trigger" @onclick="ToggleInternal">
+            @Trigger
+        </div>
+
+        @if (IsOpen)
+        {
+            <div class="bz-popup__backdrop" @onclick="OnBackdrop"></div>
+            <div class="@PanelClass" style="@(Width is not null ? $"width:{Width};" : null)">
+                @ChildContent
+            </div>
+        }
+    </div>
+}

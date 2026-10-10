@@ -1,0 +1,62 @@
+@namespace BzCore.Components.Navigation
+@inherits BzComponentBase
+@implements IDisposable
+@inject NavigationManager Nav
+
+@if (Visible)
+{
+    <header class="bz-navbar bz-navbar--@(Variant.ToString().ToLowerInvariant()) @(Sticky ? "is-sticky" : "") @(_open ? "is-open" : "") @Class"
+            style="@RootStyle()" id="@Id">
+        <div class="bz-navbar__brand">@Brand</div>
+
+        @if (Center is not null || ChildContent is not null || End is not null)
+        {
+            <button type="button" class="bz-navbar__burger" @onclick="Toggle"
+                    aria-label="navigation bar menu" aria-expanded="@(_open ? "true" : "false")">
+                <span></span><span></span><span></span>
+            </button>
+        }
+
+        <div class="bz-navbar__collapse">
+            @if (Center is not null)
+            {
+                <div class="bz-navbar__center">@Center</div>
+            }
+            <div class="bz-navbar__menu">@ChildContent</div>
+            <div class="bz-navbar__end">@End</div>
+        </div>
+    </header>
+}
+
+@code {
+    [Parameter] public RenderFragment? Brand { get; set; }
+    [Parameter] public RenderFragment? Center { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? End { get; set; }
+    [Parameter] public BzNavbarVariant Variant { get; set; } = BzNavbarVariant.Solid;
+    [Parameter] public bool Sticky { get; set; }
+
+    private bool _open;
+
+    private void Toggle() => _open = !_open;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    // collapse the mobile menu automatically after navigating
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        if (!_open) return;
+        _open = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public override void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+        base.Dispose();
+    }
+}

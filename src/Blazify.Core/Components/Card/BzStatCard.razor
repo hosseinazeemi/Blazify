@@ -1,0 +1,49 @@
+@namespace BzCore.Components.Card
+@inherits BzComponentBase
+@using BzCore.Helpers
+
+@if (Visible)
+{
+    <div class="@RootClass" style="@StatStyle" id="@Id">
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <span class="bz-stat__icon"><i class="@Icon"></i></span>
+        }
+        <div class="bz-stat__body">
+            <div class="bz-stat__value">@Value</div>
+            <div class="bz-stat__label">@Label</div>
+
+            @if (!string.IsNullOrEmpty(Trend))
+            {
+                <div class="bz-stat__trend @(TrendUp ? "up" : "down")">
+                    <i class="fa-solid @(TrendUp ? "fa-arrow-trend-up" : "fa-arrow-trend-down")"></i>
+                    @Trend
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>Font Awesome Icon</summary>
+    [Parameter] public string? Icon { get; set; }
+    /// <summary>HeadLine</summary>
+    [Parameter] public string? Value { get; set; }
+    /// <summary>Label under headline</summary>
+    [Parameter] public string? Label { get; set; }
+    /// <summary>Optional for example +12%</summary>
+    [Parameter] public string? Trend { get; set; }
+    /// <summary>Trend direction: true = up (green), false = down (red) :D</summary>
+    [Parameter] public bool TrendUp { get; set; } = true;
+    [Parameter] public BzColor Color { get; set; } = BzColor.Primary;
+    /// <summary>Fill with Color Param</summary>
+    [Parameter] public bool Filled { get; set; }
+    /// <summary>Lift on hover</summary>
+    [Parameter] public bool Hoverable { get; set; } = true;
+
+    private string RootClass =>
+        $"bz-stat {(Filled ? "bz-stat--filled" : "")} {(Hoverable ? "is-hoverable" : "")} {Class}";
+
+    private string StatStyle =>
+        $"--bz-card-c:{ColorHelper.Var(Color)};--bz-card-on:{ColorHelper.OnVar(Color)};" + (Style ?? "");
+}

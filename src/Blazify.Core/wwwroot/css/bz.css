@@ -1,0 +1,16 @@
+/* Single entry point. Reference this from your host:
+   Legacy development entry point. Consumers should load css/blazify.css. */
+@import "bz-variables.css";
+@import "bz-fonts.css";
+@import "bz-base.css";
+@import "bz-appearance.css";
+@import "bz-navigation.css";
+@import "bz-tree.css";
+@import "bz-accordion.css";
+@import "bz-groups.css";
+@import "bz-controls.css";
+@import "bz-display.css";
+@import "bz-overlay.css";
+@import "bz-routing.css";
+@import "bz-texteditor.css";
+@import "bz-document.css";

@@ -1,0 +1,31 @@
+@namespace BzCore.Components.Loading
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    @if (Type == BzProgressType.Linear)
+    {
+        <div class="@LinearClass" style="@LinearStyle" id="@Id"
+             role="progressbar" aria-valuenow="@((int)Clamped)" aria-valuemin="0" aria-valuemax="100">
+            <div class="bz-pg__track">
+                <div class="bz-pg__bar" style="@(Indeterminate ? null : $"width:{Pct}")"></div>
+            </div>
+            @if (ShowLabel && !Indeterminate)
+            {
+                <span class="bz-pg__label">@Pct</span>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="@CircularClass" style="@CircularStyle" id="@Id"
+             role="progressbar" aria-valuenow="@((int)Clamped)" aria-valuemin="0" aria-valuemax="100">
+            <div class="bz-pg__circle">
+                @if (ShowLabel && !Indeterminate)
+                {
+                    <span class="bz-pg__c-label">@Pct</span>
+                }
+            </div>
+        </div>
+    }
+}

@@ -1,0 +1,208 @@
+/* ====================  BzUploader  ==================== */
+.bz-up {
+    font-family: var(--bz-font-family);
+    width: 100%;
+}
+
+/* dropzone / compact */
+.bz-up__zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    border: 2px dashed var(--bz-border);
+    border-radius: var(--bz-radius-lg);
+    background: var(--bz-surface-muted);
+    color: var(--bz-text-muted);
+    transition: border-color var(--bz-transition-fast), background-color var(--bz-transition-fast);
+}
+
+    .bz-up__zone:hover {
+        border-color: var(--bz-primary);
+        background: color-mix(in srgb, var(--bz-primary) 6%, var(--bz-surface-muted));
+    }
+
+.bz-up__zone-icon {
+    font-size: 2rem;
+    color: var(--bz-primary);
+}
+
+.bz-up__zone-title {
+    font-weight: 700;
+    color: var(--bz-text);
+}
+
+.bz-up__zone-hint {
+    font-size: 12.5px;
+}
+
+.bz-up__zone .bz-up__input, .bz-up__zone ::deep input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.bz-up--compact .bz-up__zone {
+    flex-direction: row;
+    padding: .9rem 1.1rem;
+    gap: .75rem;
+    text-align: start;
+}
+
+.bz-up--compact .bz-up__zone-icon {
+    font-size: 1.25rem;
+}
+
+/* button */
+.bz-up__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    cursor: pointer;
+    position: relative;
+    padding: .6rem 1.1rem;
+    border-radius: var(--bz-radius);
+    border: none;
+    background: var(--bz-primary);
+    color: var(--bz-on-primary);
+    font-weight: 600;
+}
+
+    .bz-up__btn ::deep input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+/* avatar */
+.bz-up__avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bz-surface-muted);
+    border: 2px dashed var(--bz-border);
+    color: var(--bz-text-muted);
+    font-size: 1.6rem;
+}
+
+    .bz-up__avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .bz-up__avatar ::deep input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+/* file list */
+.bz-up__list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin-top: .85rem;
+}
+
+    .bz-up__list.is-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+
+.bz-up__file {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    padding: .5rem .6rem;
+    border: 1px solid var(--bz-border);
+    border-radius: var(--bz-radius);
+    background: var(--bz-surface);
+}
+
+.bz-up__list.is-gallery .bz-up__file {
+    flex-direction: column;
+    text-align: center;
+}
+
+.bz-up__thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--bz-radius-sm);
+    background-size: cover;
+    background-position: center;
+    flex: 0 0 44px;
+}
+
+.bz-up__list.is-gallery .bz-up__thumb {
+    width: 100%;
+    height: 80px;
+    flex: none;
+}
+
+.bz-up__thumb--icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bz-surface-muted);
+    color: var(--bz-text-muted);
+}
+
+.bz-up__meta {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.bz-up__name {
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: wrap;
+}
+
+.bz-up__size {
+    font-size: 11.5px;
+    color: var(--bz-text-muted);
+}
+
+.bz-up__remove {
+    border: none;
+    background: transparent;
+    color: var(--bz-text-muted);
+    cursor: pointer;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+}
+
+    .bz-up__remove:hover {
+        background: color-mix(in srgb, var(--bz-danger) 14%, transparent);
+        color: var(--bz-danger);
+    }
+
+.bz-up__error {
+    margin-top: .6rem;
+    color: var(--bz-danger);
+    font-size: 12.5px;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}

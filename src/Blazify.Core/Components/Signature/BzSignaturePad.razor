@@ -1,0 +1,86 @@
+@namespace BzCore.Components.Signature
+@inherits BzComponentBase
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@if (Visible)
+{
+    <div class="bz-sign @Class" style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-sign__label">@Label</label>
+        }
+        <div class="bz-sign__pad" style="height:@Height">
+            <canvas @ref="_canvas" class="bz-sign__canvas"></canvas>
+            @if (string.IsNullOrEmpty(Value))
+            {
+                <span class="bz-sign__hint">اینجا امضا کنید</span>
+            }
+        </div>
+        <div class="bz-sign__bar">
+            <button type="button" class="bz-sign__btn" @onclick="ClearAsync">
+                <i class="fa-solid fa-eraser"></i> پاک کردن
+            </button>
+            @if (ShowDownload)
+            {
+                <button type="button" class="bz-sign__btn" @onclick="DownloadAsync" disabled="@string.IsNullOrEmpty(Value)">
+                    <i class="fa-solid fa-download"></i> دانلود
+                </button>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>The signature as a PNG data-URL (two-way bindable).</summary>
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public string? Label { get; set; }
+    /// <summary>Pad height.</summary>
+    [Parameter] public string Height { get; set; } = "200px";
+    /// <summary>Show the download button.</summary>
+    [Parameter] public bool ShowDownload { get; set; } = true;
+    [Parameter] public string DownloadName { get; set; } = "signature.png";
+
+    private ElementReference _canvas;
+    private DotNetObjectReference<BzSignaturePad>? _ref;
+    private bool _ready;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _ref = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("bzSignature.init", _canvas, _ref);
+            _ready = true;
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnChanged(string dataUrl)
+    {
+        Value = string.IsNullOrEmpty(dataUrl) ? null : dataUrl;
+        if (ValueChanged.HasDelegate) await ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+    }
+
+    public async Task ClearAsync()
+    {
+        if (_ready) await JS.InvokeVoidAsync("bzSignature.clear", _canvas);
+    }
+
+    public async Task<string?> GetImageAsync()
+        => _ready ? await JS.InvokeAsync<string>("bzSignature.toDataURL", _canvas) : null;
+
+    private async Task DownloadAsync()
+    {
+        if (string.IsNullOrEmpty(Value)) return;
+        await JS.InvokeVoidAsync("bzSignatureDownload", _canvas, DownloadName);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { if (_ready) await JS.InvokeVoidAsync("bzSignature.destroy", _canvas); } catch { }
+        _ref?.Dispose();
+    }
+}

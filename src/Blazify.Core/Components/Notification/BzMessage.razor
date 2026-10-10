@@ -1,0 +1,66 @@
+@namespace BzCore.Components.Notification
+@inherits BzComponentBase
+@using BzCore.Notifications
+
+@if (Visible && !_closed)
+{
+    <div class="bz-message bz-message--@Severity_ @Class" style="@RootStyle()" id="@Id" role="alert">
+        <i class="@IconClass bz-message__icon"></i>
+        <div class="bz-message__body">
+            @if (!string.IsNullOrEmpty(Title))
+            {
+                <div class="bz-message__title">@Title</div>
+            }
+            @if (ChildContent is not null)
+            {
+                <div class="bz-message__text">@ChildContent</div>
+            }
+            else if (!string.IsNullOrEmpty(Text))
+            {
+                <div class="bz-message__text">@Text</div>
+            }
+        </div>
+        @if (Closable)
+        {
+            <button type="button" class="bz-message__close" @onclick="CloseAsync" aria-label="بستن">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>Severity, sets the color and default icon</summary>
+    [Parameter] public BzSeverity Severity { get; set; } = BzSeverity.Info;
+    /// <summary>Bold title line</summary>
+    [Parameter] public string? Title { get; set; }
+    /// <summary>Message text</summary>
+    [Parameter] public string? Text { get; set; }
+    /// <summary>Override the severity'ssssss default icon</summary>
+    [Parameter] public string? Icon { get; set; }
+    /// <summary>Show a close button</summary>
+    [Parameter] public bool Closable { get; set; }
+    /// <summary>Custom body content, replacing Text</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>OnClose message</summary>
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private bool _closed;
+
+    private string Severity_ => SeverityHelper.Cls(Severity);
+    private string IconClass => string.IsNullOrEmpty(Icon) ? SeverityHelper.Icon(Severity) : Icon;
+
+    private async Task CloseAsync()
+    {
+        _closed = true;
+        if (OnClose.HasDelegate)
+            await OnClose.InvokeAsync();
+    }
+
+    /// <summary>Show the message again after it was closed.</summary>
+    public void Reopen()
+    {
+        _closed = false;
+        StateHasChanged();
+    }
+}

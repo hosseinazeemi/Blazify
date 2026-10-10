@@ -1,0 +1,11 @@
+@inherits BzComponentBase
+@namespace BzCore.Components.Accordion
+
+@if (Visible)
+{
+    <div class="@RootClass" style="@RootStyle()" id="@Id">
+        <CascadingValue Value="this" IsFixed="true">
+            @ChildContent
+        </CascadingValue>
+    </div>
+}

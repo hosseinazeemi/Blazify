@@ -1,0 +1,58 @@
+@namespace BzCore.Components.Navigation
+@using Microsoft.AspNetCore.Components.Routing
+
+@if (Item is not null)
+{
+    <div class="bz-menu__item @(HasChildren ? "has-children" : "")">
+        @if (!string.IsNullOrEmpty(Item.Href) && !HasChildren)
+        {
+            <NavLink class="bz-menu__link" href="@Item.Href">
+                @if (!string.IsNullOrEmpty(Item.Icon))
+                {
+                    <i class="@Item.Icon"></i>
+                }
+                <span>@Item.Text</span>
+                @if (!string.IsNullOrEmpty(Item.Badge))
+                {
+                    <span class="bz-menu__badge">@Item.Badge</span>
+                }
+            </NavLink>
+        }
+        else
+        {
+            <button type="button" class="bz-menu__link" disabled="@Item.Disabled"
+                    @onclick="@(() => Item.OnClick?.Invoke())">
+                @if (!string.IsNullOrEmpty(Item.Icon))
+                {
+                    <i class="@Item.Icon"></i>
+                }
+                <span>@Item.Text</span>
+                @if (!string.IsNullOrEmpty(Item.Badge))
+                {
+                    <span class="bz-menu__badge">@Item.Badge</span>
+                }
+                @if (HasChildren)
+                {
+                    <i class="fa-solid fa-angle-down bz-menu__caret"></i>
+                }
+            </button>
+        }
+
+        @if (HasChildren)
+        {
+            <div class="bz-menu__dropdown bz-menu__dropdown--l@(Level)">
+                @foreach (var child in Item!.Children!)
+                {
+                    <BzMenuNode Item="child" Level="Level + 1" />
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public BzMenuItem? Item { get; set; }
+    [Parameter] public int Level { get; set; }
+
+    private bool HasChildren => Item?.Children is { Count: > 0 };
+}

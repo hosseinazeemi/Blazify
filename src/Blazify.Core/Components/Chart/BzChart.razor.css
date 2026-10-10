@@ -1,0 +1,43 @@
+/* ====================  BzChart  ==================== */
+.bz-chart { font-family: var(--bz-font-family); width: 100%; }
+.bz-chart__title { font-weight: 700; font-size: 14px; margin-bottom: .5rem; color: var(--bz-text); }
+.bz-chart__canvas { width: 100%; }
+.bz-chart__svg { width: 100%; height: 100%; overflow: visible; }
+
+.bz-chart__grid { stroke: color-mix(in srgb, var(--bz-border) 70%, transparent); stroke-width: 1; stroke-dasharray: 3 3; }
+.bz-chart__axis-y { fill: var(--bz-text-muted); font-size: 11px; text-anchor: end; }
+.bz-chart__axis-x { fill: var(--bz-text-muted); font-size: 11px; text-anchor: middle; }
+.bz-chart__value { fill: var(--bz-text-muted); font-size: 10px; text-anchor: middle; }
+
+.bz-chart__bar { transition: opacity var(--bz-transition-fast); transform-box: fill-box; transform-origin: bottom; }
+.bz-chart__bar:hover { opacity: .8; }
+
+.bz-chart__line { stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.bz-chart__line--spark { stroke-width: 2; }
+.bz-chart__area { opacity: .16; }
+.bz-chart__dot { transition: r var(--bz-transition-fast); }
+.bz-chart__dot:hover { r: 5; }
+
+.bz-chart__slice { transition: opacity var(--bz-transition-fast); cursor: pointer; }
+.bz-chart__slice:hover { opacity: .85; }
+.bz-chart__slice-label { fill: #fff; font-size: 11px; font-weight: 700; text-anchor: middle; dominant-baseline: middle; }
+
+.bz-chart__legend { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; justify-content: center; margin-top: .75rem; }
+.bz-chart__legend-item { display: inline-flex; align-items: center; gap: .4rem; font-size: 12.5px; color: var(--bz-text-muted); }
+.bz-chart__legend-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+/* animations */
+.bz-chart--animate .bz-chart__bar { animation: bz-chart-grow .5s cubic-bezier(.2,.8,.2,1) backwards; }
+@keyframes bz-chart-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+.bz-chart--animate .bz-chart__line {
+    stroke-dasharray: 1200; stroke-dashoffset: 1200;
+    animation: bz-chart-draw 1s ease forwards;
+}
+@keyframes bz-chart-draw { to { stroke-dashoffset: 0; } }
+
+.bz-chart--animate .bz-chart__area { animation: bz-chart-fade .8s ease backwards; }
+@keyframes bz-chart-fade { from { opacity: 0; } to { opacity: .16; } }
+
+.bz-chart--animate .bz-chart__slice { animation: bz-chart-fade-in .5s ease backwards; }
+@keyframes bz-chart-fade-in { from { opacity: 0; } to { opacity: 1; } }

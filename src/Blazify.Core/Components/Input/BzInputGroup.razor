@@ -1,0 +1,78 @@
+@namespace BzCore.Components.Input
+@inherits BzComponentBase
+@using BzCore.Enums
+
+@if (Visible)
+{
+    <div class="bz-ig-wrap @Class" style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-ig__label" for="@FieldId">@Label</label>
+        }
+
+        <div class="@FieldClass">
+            @if (Prepend is not null)
+            {
+                <div class="bz-ig__addon bz-ig__addon--prepend">@Prepend</div>
+            }
+
+            <input class="bz-ig__input"
+                   id="@FieldId"
+                   type="@Type"
+                   value="@Value"
+                   placeholder="@Placeholder"
+                   disabled="@Disabled"
+                   readonly="@ReadOnly"
+                   @oninput="UpdateValue"
+                   @onchange="UpdateValue"
+                   @onfocus="() => _focused = true"
+                   @onblur="() => _focused = false"
+                   @attributes="AdditionalAttributes" />
+
+            @if (Append is not null)
+            {
+                <div class="bz-ig__addon bz-ig__addon--append">@Append</div>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(Hint))
+        {
+            <span class="bz-ig__hint">@Hint</span>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>two-way</summary>
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    /// <summary>Before content</summary>
+    [Parameter] public RenderFragment? Prepend { get; set; }
+    /// <summary>After Content</summary>
+    [Parameter] public RenderFragment? Append { get; set; }
+
+    /// <summary>Visual style</summary>
+    [Parameter] public BzInputGroupVariant Variant { get; set; } = BzInputGroupVariant.Default;
+    /// <summary>Display name or title</summary>
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string? Hint { get; set; }
+    [Parameter] public string Type { get; set; } = "text";
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+
+    private bool _focused;
+
+    private string FieldId => Id ?? $"bz-ig-{GetHashCode():x}";
+
+    private string FieldClass =>
+        $"bz-ig bz-ig--{Variant.ToString().ToLowerInvariant()} " +
+        $"{(Disabled ? "is-disabled" : "")} {(_focused ? "is-focused" : "")}";
+
+    private async Task UpdateValue(ChangeEventArgs e)
+    {
+        Value = e.Value?.ToString();
+        if (ValueChanged.HasDelegate) await ValueChanged.InvokeAsync(Value);
+    }
+}

@@ -1,0 +1,29 @@
+@namespace BzCore.Components.Display
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <div class="bz-empty @Class" style="@RootStyle()" id="@Id">
+        <div class="bz-empty__icon"><i class="@Icon"></i></div>
+        <h3 class="bz-empty__title">@Title</h3>
+
+        @if (!string.IsNullOrEmpty(Description))
+        {
+            <p class="bz-empty__desc">@Description</p>
+        }
+        @if (Action is not null)
+        {
+            <div class="bz-empty__action">@Action</div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Icon { get; set; } = "fa-regular fa-folder-open";
+
+    [Parameter] public string Title { get; set; } = "چیزی برای نمایش نیست";
+
+    [Parameter] public string? Description { get; set; }
+
+    [Parameter] public RenderFragment? Action { get; set; }
+}

@@ -1,0 +1,88 @@
+@namespace BzCore.Components.Editor
+@inherits BzComponentBase
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@if (Visible)
+{
+    <div class="bz-editor @Class" style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-editor__label">@Label</label>
+        }
+        <div class="bz-editor__host" style="--bz-ed-h:@Height">
+            <div @ref="_el"></div>
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>two-way binding</summary>
+    [Parameter] public string? Value { get; set; }
+
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>Height px</summary>
+    [Parameter] public string Height { get; set; } = "260px";
+
+    [Parameter] public bool ReadOnly { get; set; }
+
+    private ElementReference _el;
+    private DotNetObjectReference<BzEditor>? _ref;
+    private bool _created;
+    private string? _last;
+    private bool _lastReadOnly;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _ref = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("bzEditor.create", _el, _ref, Value ?? "", ReadOnly);
+            _created = true;
+            _last = Value;
+            _lastReadOnly = ReadOnly;
+        }
+        else if (_created)
+        {
+            if (Value != _last)
+            {
+                _last = Value;
+                await JS.InvokeVoidAsync("bzEditor.setData", _el, Value ?? "");
+            }
+
+            if (ReadOnly != _lastReadOnly)
+            {
+                _lastReadOnly = ReadOnly;
+                await JS.InvokeVoidAsync("bzEditor.setReadOnly", _el, ReadOnly);
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnChanged(string html)
+    {
+        _last = html;
+        Value = html;
+
+        if (ValueChanged.HasDelegate)
+            await ValueChanged.InvokeAsync(html);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_created)
+                await JS.InvokeVoidAsync("bzEditor.destroy", _el);
+        }
+        catch
+        {
+        }
+
+        _ref?.Dispose();
+    }
+
+}

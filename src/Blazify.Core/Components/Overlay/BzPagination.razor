@@ -1,0 +1,72 @@
+@namespace BzCore.Components.Overlay
+@inherits BzComponentBase
+
+@*  BzPagination — page number buttons with prev/next arrows. Only the first page,
+    the last page, and a window of `Sibling` pages around the current one are shown;
+    the gaps between them are rendered as an ellipsis (…).  *@
+
+@if (Visible && TotalPages > 1)
+{
+    <nav class="bz-pagination @Class" style="@RootStyle()" id="@Id">
+        <button class="bz-pg__btn" disabled="@(Page <= 1)" @onclick="() => Go(Page - 1)">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+        @foreach (var slot in PageSlots())
+        {
+            @if (slot == Ellipsis)
+            {
+                <span class="bz-pg__dots">…</span>
+            }
+            else
+            {
+                var pageNumber = slot;
+                <button class="bz-pg__btn @(pageNumber == Page ? "is-active" : "")"
+                        @onclick="() => Go(pageNumber)">@pageNumber</button>
+            }
+        }
+
+        <button class="bz-pg__btn" disabled="@(Page >= TotalPages)" @onclick="() => Go(Page + 1)">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+    </nav>
+}
+
+@code {
+    /// <summary>Current page (1-based, two-way bindable).</summary>
+    [Parameter] public int Page { get; set; } = 1;
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+    /// <summary>Total number of pages.</summary>
+    [Parameter] public int TotalPages { get; set; } = 1;
+    /// <summary>How many pages to show on each side of the current one.</summary>
+    [Parameter] public int Sibling { get; set; } = 1;
+
+    // Sentinel returned by PageSlots() to mean "render an ellipsis here".
+    private const int Ellipsis = -1;
+
+    // Build the visible sequence: 1, …, (window around Page), …, TotalPages.
+    private IEnumerable<int> PageSlots()
+    {
+        var pages = new SortedSet<int> { 1, TotalPages };
+        for (var p = Page - Sibling; p <= Page + Sibling; p++)
+            if (p > 1 && p < TotalPages) pages.Add(p);
+
+        // Insert an Ellipsis wherever consecutive visible pages have a gap.
+        var slots = new List<int>();
+        var previous = 0;
+        foreach (var p in pages)
+        {
+            if (previous != 0 && p - previous > 1) slots.Add(Ellipsis);
+            slots.Add(p);
+            previous = p;
+        }
+        return slots;
+    }
+
+    private async Task Go(int page)
+    {
+        page = Math.Clamp(page, 1, TotalPages);
+        Page = page;
+        if (PageChanged.HasDelegate) await PageChanged.InvokeAsync(page);
+    }
+}

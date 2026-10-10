@@ -1,0 +1,67 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@if (Visible)
+{
+    <div @ref="_el" class="bz-focus-scope @Class" style="@RootStyle()" id="@Id">
+        @ChildContent
+    </div>
+}
+
+@code {
+    private ElementReference _el;
+    private bool _attached;
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary> Next: Enter(default you can change with this Parameter), Prev: Shift+Enter
+    /// </summary>
+    [Parameter] public List<string> AdvanceKeys { get; set; } = new() { "Enter" };
+
+    /// <summary>Custom set key for focus on prev element</summary>
+    [Parameter] public List<string> ReverseKeys { get; set; } = new();
+
+    /// <summary>Loop focus</summary>
+    [Parameter] public bool Loop { get; set; } = true;
+
+    /// <summary>When true, Enter inside text area type a newline. Default: true.</summary>
+    [Parameter] public bool SkipTextarea { get; set; } = true;
+
+    /// <summary>On,Off</summary>
+    [Parameter] public bool Enabled { get; set; } = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Enabled)
+        {
+            await JS.InvokeVoidAsync("bzFocusNav.attach", _el, new
+            {
+                advanceKeys = AdvanceKeys,
+                reverseKeys = ReverseKeys,
+                loop = Loop,
+                skipTextarea = SkipTextarea
+            });
+            _attached = true;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_attached)
+        {
+            try 
+            {
+                await JS.InvokeVoidAsync("bzFocusNav.detach", _el); 
+            }
+            catch 
+            { 
+                /*
+                 * 
+                 */
+            }
+        }
+        base.Dispose();
+    }
+}

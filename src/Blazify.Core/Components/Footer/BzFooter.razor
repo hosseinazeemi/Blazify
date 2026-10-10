@@ -1,0 +1,36 @@
+@namespace BzCore.Components.Footer
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <footer class="bz-footer bz-footer--@(Variant.ToString().ToLowerInvariant()) @Class" style="@RootStyle()" id="@Id">
+        @if (ChildContent is not null)
+        {
+            <div class="bz-footer__main">@ChildContent</div>
+        }
+        @if (!string.IsNullOrEmpty(Copyright) || Bottom is not null)
+        {
+            <div class="bz-footer__bottom">
+                @if (Bottom is not null)
+                {
+                    @Bottom
+                }
+                else
+                {
+                    <span>@Copyright</span>
+                }
+            </div>
+        }
+    </footer>
+}
+
+@code {
+    /// <summary>Main Content</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Bottom Content</summary>
+    [Parameter] public RenderFragment? Bottom { get; set; }
+    /// <summary>Copyright Text</summary>
+    [Parameter] public string? Copyright { get; set; }
+    /// <summary>Footer Variant</summary>
+    [Parameter] public BzFooterVariant Variant { get; set; } = BzFooterVariant.Simple;
+}

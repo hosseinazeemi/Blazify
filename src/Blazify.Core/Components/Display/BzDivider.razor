@@ -1,0 +1,26 @@
+@namespace BzCore.Components.Display
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    @if (Orientation == BzDividerOrientation.Vertical)
+    {
+        <span class="bz-divider bz-divider--v @Class" style="@RootStyle()" id="@Id"></span>
+    }
+    else if (!string.IsNullOrEmpty(Text))
+    {
+        <div class="bz-divider bz-divider--text @Class" style="@RootStyle()" id="@Id">
+            <span>@Text</span>
+        </div>
+    }
+    else
+    {
+        <hr class="bz-divider @Class" style="@RootStyle()" id="@Id" />
+    }
+}
+
+@code {
+    [Parameter] public string? Text { get; set; }
+
+    [Parameter] public BzDividerOrientation Orientation { get; set; } = BzDividerOrientation.Horizontal;
+}

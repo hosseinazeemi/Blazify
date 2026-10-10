@@ -1,0 +1,112 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+@typeparam TValue
+@inject IJSRuntime JS
+
+@if (Visible)
+{
+    <div class="@RootCss("bz-select").AddIf(_open, "is-open").AddIf(_dropUp, "is-drop-up").Build()" style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-select__label">@Label</label>
+        }
+        <button type="button" class="bz-select__control" disabled="@Disabled"
+                tabindex="@TabIndex" @attributes="ControlAttributes" @onclick="Toggle">
+            <span class="bz-select__value @(_selected is null ? "is-placeholder" : "")">
+                @(_selected?.Label ?? Placeholder)
+            </span>
+            @if (Clearable && _selected is not null)
+            {
+                <span class="bz-select__clear" @onclick:stopPropagation="true" @onclick="Clear"><i class="fa-solid fa-xmark"></i></span>
+            }
+            <i class="fa-solid fa-chevron-down bz-select__caret"></i>
+        </button>
+        @if (_open)
+        {
+            <div class="bz-select__backdrop" @onclick="Close"></div>
+            <div class="bz-select__menu">
+                @foreach (var option in Items)
+                {
+                    var isSelected = EqualityComparer<TValue>.Default.Equals(Value, option.Value);
+                    <button type="button" class="bz-select__opt @(isSelected ? "is-sel" : "")" disabled="@option.Disabled"
+                            @onclick="@(() => Pick(option))">
+                        @if (!string.IsNullOrEmpty(option.Icon))
+                        {
+                            <i class="@option.Icon"></i>
+                        }
+                        <span>@option.Label</span>
+                        @if (isSelected)
+                        {
+                            <i class="fa-solid fa-check bz-select__tick"></i>
+                        }
+                    </button>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>all options</summary>
+    [Parameter] public List<BzOption<TValue>> Items { get; set; } = new();
+    /// <summary>two-way bindable</summary>
+    [Parameter] public TValue? Value { get; set; }
+    [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "انتخاب کنید…";
+    /// <summary>Show a clear button</summary>
+    [Parameter] public bool Clearable { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public int TabIndex { get; set; }
+
+    private IReadOnlyDictionary<string, object>? ControlAttributes
+    {
+        get
+        {
+            if (AdditionalAttributes is null)
+                return null;
+            var d = new Dictionary<string, object>(AdditionalAttributes);
+            d.Remove("class");
+            d.Remove("style");
+            return d;
+        }
+    }
+
+    private bool _open;
+    private bool _dropUp;
+    private BzOption<TValue>? _selected => Items.FirstOrDefault(o => EqualityComparer<TValue>.Default.Equals(Value, o.Value));
+
+    void Toggle()
+    {
+        if (!Disabled)
+            _open = !_open;
+    }
+    void Close() => _open = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_open)
+        {
+            try
+            {
+                var next = await JS.InvokeAsync<bool>("bzOverlay.shouldOpenUp", Id, 280);
+                if (next != _dropUp) { _dropUp = next; StateHasChanged(); }
+            }
+            catch (JSException) { }
+        }
+    }
+
+    async Task Pick(BzOption<TValue> opt)
+    {
+        Value = opt.Value;
+        _open = false;
+        if (ValueChanged.HasDelegate)
+            await ValueChanged.InvokeAsync(opt.Value);
+    }
+    async Task Clear()
+    {
+        Value = default;
+        if (ValueChanged.HasDelegate)
+            await ValueChanged.InvokeAsync(default);
+    }
+}

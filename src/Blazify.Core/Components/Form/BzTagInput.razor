@@ -1,0 +1,64 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <div class="bz-tags @Class" style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-tags__label">@Label</label>
+        }
+        <div class="bz-tags__box">
+            @foreach (var tag in Values)
+            {
+                <span class="bz-tags__tag">@tag <i class="fa-solid fa-xmark" @onclick="@(() => Remove(tag))"></i></span>
+            }
+            <input class="bz-tags__input" value="@_draft" placeholder="@Placeholder"
+                   @oninput="@(e => _draft = e.Value?.ToString() ?? "")"
+                   @onkeydown="OnKey" />
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>two-way binding</summary>
+    [Parameter] public List<string> Values { get; set; } = new();
+    [Parameter] public EventCallback<List<string>> ValuesChanged { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "Type and enter...";
+
+    private string _draft = "";
+
+    async Task OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_draft))
+        {
+            var list = new List<string>(Values);
+
+            if (!list.Contains(_draft.Trim()))
+                list.Add(_draft.Trim());
+
+            _draft = "";
+            Values = list;
+
+            if (ValuesChanged.HasDelegate)
+                await ValuesChanged.InvokeAsync(list);
+        }
+        else if (e.Key == "Backspace" && string.IsNullOrEmpty(_draft) && Values.Count > 0)
+        {
+            await Remove(Values[^1]); // values[values.length - 1] :D
+        }
+    }
+
+    async Task Remove(string tag)
+    {
+        var list = new List<string>(Values);
+
+        list.Remove(tag);
+        Values = list;
+
+        if (ValuesChanged.HasDelegate)
+            await ValuesChanged.InvokeAsync(list);
+    }
+
+}

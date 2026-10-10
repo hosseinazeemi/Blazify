@@ -1,0 +1,46 @@
+@namespace BzCore.Routing
+@using BzCore.Components.Navigation
+
+@* Breadcrumbs with nothing to maintain: the trail comes from the Parent chain
+   declared on each page, so it can never drift out of sync with the routes. *@
+
+@if (_steps.Count > 1 || AlwaysShow)
+{
+    <BzBreadcrumbs Items="@_items" Separator="@Separator" Class="@Class" />
+}
+
+@code {
+    [CascadingParameter] public BzRouteContext? Route { get; set; }
+
+    /// <summary>Render even when the trail is a single step.</summary>
+    [Parameter] public bool AlwaysShow { get; set; }
+
+    /// <summary>Separator style, forwarded to BzBreadcrumbs.</summary>
+    [Parameter] public BzBreadcrumbSeparator Separator { get; set; } = BzBreadcrumbSeparator.Chevron;
+
+    /// <summary>Extra CSS classes.</summary>
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>Optional extra step appended to the end (e.g. a record's name).</summary>
+    [Parameter] public string? Current { get; set; }
+
+    private IReadOnlyList<BzBreadcrumbStep> _steps = Array.Empty<BzBreadcrumbStep>();
+    private List<BzBreadcrumbItem> _items = new();
+
+    protected override void OnParametersSet()
+    {
+        _steps = Route?.Breadcrumbs ?? Array.Empty<BzBreadcrumbStep>();
+        _items = _steps.Select(s => new BzBreadcrumbItem(s.Text, s.Href, s.Icon)).ToList();
+
+        if (!string.IsNullOrWhiteSpace(Current))
+        {
+            // The declared last step becomes a link; the runtime value takes its place.
+            if (_items.Count > 0 && _steps.Count > 0)
+            {
+                var last = _steps[^1];
+                _items[^1] = new BzBreadcrumbItem(last.Text, Route?.Template is null ? null : last.Href, last.Icon);
+            }
+            _items.Add(new BzBreadcrumbItem(Current!, null));
+        }
+    }
+}

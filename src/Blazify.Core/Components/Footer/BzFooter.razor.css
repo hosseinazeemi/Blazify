@@ -1,0 +1,31 @@
+/* ====================  BzFooter  ==================== */
+.bz-footer {
+    font-family: var(--bz-font-family);
+    background: var(--bz-surface); color: var(--bz-text);
+    border-top: 1px solid var(--bz-border);
+    padding: 2rem 1.5rem 1rem;
+}
+.bz-footer__main { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: space-between; }
+.bz-footer__bottom {
+    margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid color-mix(in srgb, var(--bz-border) 70%, transparent);
+    font-size: 12.5px; color: var(--bz-text-muted); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem;
+}
+
+/* a column helper for use inside ChildContent */
+.bz-footer ::deep .bz-footer-col { min-width: 160px; }
+.bz-footer ::deep .bz-footer-col h4 { font-size: 14px; margin: 0 0 .75rem; }
+.bz-footer ::deep .bz-footer-col a { display: block; color: var(--bz-text-muted); text-decoration: none; font-size: 13px; padding: .2rem 0; }
+.bz-footer ::deep .bz-footer-col a:hover { color: var(--bz-primary); }
+
+/* variants */
+.bz-footer--columns .bz-footer__main { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.bz-footer--dark { background: #0f172a; color: #cbd5e1; border-top: none; }
+.bz-footer--dark .bz-footer__bottom { color: #94a3b8; }
+.bz-footer--gradient { background: linear-gradient(135deg, var(--bz-primary), color-mix(in srgb, var(--bz-primary) 45%, var(--bz-info))); color: var(--bz-on-primary); border-top: none; }
+.bz-footer--gradient .bz-footer__bottom { color: color-mix(in srgb, var(--bz-on-primary) 80%, transparent); border-top-color: color-mix(in srgb, #fff 25%, transparent); }
+.bz-footer--centered { text-align: center; }
+.bz-footer--centered .bz-footer__main { justify-content: center; }
+.bz-footer--centered .bz-footer__bottom { justify-content: center; }
+.bz-footer--minimal { padding: 1rem 1.5rem; }
+.bz-footer--minimal .bz-footer__main { display: none; }
+.bz-footer--minimal .bz-footer__bottom { margin-top: 0; padding-top: 0; border-top: none; }

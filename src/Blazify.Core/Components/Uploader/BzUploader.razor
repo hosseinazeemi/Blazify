@@ -1,0 +1,74 @@
+@namespace BzCore.Components.Uploader
+@inherits BzComponentBase
+@using Microsoft.AspNetCore.Components.Forms
+
+@*  BzUploader — file picker (dropzone / button / avatar / gallery). Validation,
+    preview thumbnails and the file list live in BzUploader.razor.cs.  *@
+
+@if (Visible)
+{
+    <div class="@RootClass" style="@RootStyle()" id="@Id">
+
+        @if (Variant == BzUploaderVariant.Button)
+        {
+            <label class="bz-up__btn">
+                <i class="fa-solid fa-cloud-arrow-up"></i> <span>@ButtonText</span>
+                <InputFile OnChange="OnChange" multiple="@Multiple" accept="@Accept" />
+            </label>
+        }
+        else if (Variant == BzUploaderVariant.Avatar)
+        {
+            <label class="bz-up__avatar">
+                @if (_files.FirstOrDefault()?.PreviewUrl is { } url)
+                {
+                    <img src="@url" alt="" />
+                }
+                else
+                {
+                    <i class="fa-solid fa-camera"></i>
+                }
+                <InputFile OnChange="OnChange" accept="image/*" />
+            </label>
+        }
+        else
+        {
+            <label class="bz-up__zone">
+                <i class="fa-solid fa-cloud-arrow-up bz-up__zone-icon"></i>
+                <div class="bz-up__zone-title">@Title</div>
+                <div class="bz-up__zone-hint">@Hint</div>
+                <InputFile OnChange="OnChange" multiple="@Multiple" accept="@Accept" class="bz-up__input" />
+            </label>
+        }
+
+        @if (_error is not null)
+        {
+            <div class="bz-up__error"><i class="fa-solid fa-triangle-exclamation"></i> @_error</div>
+        }
+
+        @if (_files.Count > 0 && Variant != BzUploaderVariant.Avatar)
+        {
+            <div class="bz-up__list @(Variant == BzUploaderVariant.Gallery ? "is-gallery" : "")">
+                @foreach (var file in _files)
+                {
+                    <div class="bz-up__file @(file.IsImage ? "is-image" : "")">
+                        @if (file.PreviewUrl is not null)
+                        {
+                            <div class="bz-up__thumb" style="background-image:url('@file.PreviewUrl')"></div>
+                        }
+                        else
+                        {
+                            <div class="bz-up__thumb bz-up__thumb--icon"><i class="fa-solid fa-file"></i></div>
+                        }
+                        <div class="bz-up__meta">
+                            <div class="bz-up__name" title="@file.Name">@file.Name</div>
+                            <div class="bz-up__size">@file.SizeText</div>
+                        </div>
+                        <button type="button" class="bz-up__remove" @onclick="@(() => Remove(file))" aria-label="حذف">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}

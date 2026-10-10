@@ -1,0 +1,328 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+@inject IJSRuntime JS
+@using BzCore.Helpers
+
+@if (Visible)
+{
+    <div class="bz-bankinput @Class @(_result.IsValid ? "is-valid" : (_touched ? "is-invalid" : ""))"
+         style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-bankinput__label">@Label</label>
+        }
+
+        <div class="bz-bankinput__cells" dir="ltr">
+            @if (!string.IsNullOrEmpty(Prefix))
+            {
+                <span class="bz-bankinput__prefix">@Prefix</span>
+            }
+
+            @if (_grouped)
+            {
+                @for (var g = 0; g < _groups.Length; g++)
+                {
+                    var gi = g;
+                    @if (g > 0)
+                    {
+                        <span class="bz-bankinput__sep">@Separator</span>
+                    }
+                    <input class="bz-bankinput__cell bz-bankinput__cell--group" id="@GroupId(gi)"
+                           style="width:calc(@(_groups[gi])ch + 1.4rem)"
+                           maxlength="@_groups[gi]" inputmode="numeric" autocomplete="off"
+                           value="@GroupValue(gi)"
+                           @oninput="@(e => OnGroupInput(gi, e))"
+                           @onkeydown="@(e => OnGroupKey(gi, e))" />
+                }
+            }
+            else
+            {
+                var cell = 0;
+                @for (var g = 0; g < _groups.Length; g++)
+                {
+                    @if (g > 0)
+                    {
+                        <span class="bz-bankinput__sep">@Separator</span>
+                    }
+                    <div class="bz-bankinput__group">
+                        @for (var k = 0; k < _groups[g]; k++)
+                        {
+                            var idx = cell;
+                            <input class="bz-bankinput__cell" id="@CellId(idx)"
+                                   maxlength="1" inputmode="@InputMode" autocomplete="off"
+                                   value="@CharAt(idx)"
+                                   @oninput="@(e => OnInput(idx, e))"
+                                   @onkeydown="@(e => OnKeyDown(idx, e))" />
+                            cell++;
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        @if (ShowBank && _result.BankName is not null)
+        {
+            <div class="bz-bankinput__bank">
+                <span class="bz-bankinput__bank-dot" style="background:@(_bankColor ?? "var(--bz-primary)")"></span>
+                @_result.BankName
+            </div>
+        }
+
+        @if (ShowLocation && Type == BzIdentifierType.NationalCode && _location.IsKnown)
+        {
+            <div class="bz-bankinput__loc"><i class="fa-solid fa-location-dot"></i> @_location.ToString()</div>
+        }
+
+        @if (ShowValidation && _touched && !_result.IsValid && _result.Message is not null)
+        {
+            <div class="bz-bankinput__msg bz-bankinput__msg--error">@_result.Message</div>
+        }
+        else if (ShowValidation && _result.IsValid)
+        {
+            <div class="bz-bankinput__msg bz-bankinput__msg--ok"><i class="fa-solid fa-check"></i> معتبر</div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public BzIdentifierType Type { get; set; } = BzIdentifierType.CardNumber;
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// make custom groupSize for input, example: Length=10 ,GroupSizes={4,3,3} => 3 input with max length 4,3,3
+    /// </summary>
+    [Parameter] public int[]? GroupSizes { get; set; }
+
+    [Parameter] public List<BzBank>? AllowedBanks { get; set; }
+
+    /// <summary>ISO Country Code IR,US</summary>
+    [Parameter] public string? Country { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public bool ShowBank { get; set; } = true;
+    [Parameter] public bool ShowValidation { get; set; } = true;
+
+    /// <summary>For national code: city,state</summary>
+    [Parameter] public bool ShowLocation { get; set; }
+
+    [Parameter] public string Separator { get; set; } = "-";
+
+    /// <summary>Static prefix ,example: IR 2515263000000 </summary>
+    [Parameter] public string? Prefix { get; set; }
+
+    /// <summary>Custom length</summary>
+    [Parameter] public int Length { get; set; } = 16;
+
+    /// <summary>Example: [Length=16] and [GroupSize=4] equals => 4 input with max length 4</summary>
+    [Parameter] public int GroupSize { get; set; } = 4;
+
+    [Parameter] public EventCallback<IdentifierValidationResult> OnValidated { get; set; }
+
+    private int[] _groups = Array.Empty<int>();
+    private int _total;
+    private bool _alpha; // agar true bashe ,mishe alphabet dad
+    private bool _grouped;    // one input per group (card/iban/account) vs one per digit
+    private bool _touched;
+    private char[] _buf = Array.Empty<char>();
+    private IdentifierValidationResult _result;
+    private NationalCodeLocation _location;
+    private string? _bankColor;
+    private readonly string _uid = "bank" + Guid.NewGuid().ToString("N")[..8];
+
+    private string InputMode => _alpha ? "text" : "numeric";
+    private string CellId(int i) => $"{_uid}-{i}";
+    private string GroupId(int g) => $"{_uid}-g{g}";
+    private string CharAt(int i) => i < _buf.Length && _buf[i] != ' ' ? _buf[i].ToString() : "";
+
+    private int GroupOffset(int g)
+    {
+        var o = 0;
+        for (var i = 0; i < g; i++) o += _groups[i];
+        return o;
+    }
+
+    private string GroupValue(int g)
+    {
+        var off = GroupOffset(g);
+        var sb = new System.Text.StringBuilder();
+
+        for (var k = 0; k < _groups[g] && off + k < _buf.Length; k++)
+            if (_buf[off + k] != ' ') sb.Append(_buf[off + k]);
+
+        return sb.ToString();
+    }
+
+    protected override void OnParametersSet()
+    {
+        (_groups, _alpha, _grouped, var prefix) = Layout(Type, GroupSizes, Length, GroupSize);
+        Prefix ??= prefix;
+        _total = _groups.Sum();
+        SyncBufFromValue();
+        Recompute();
+    }
+
+    private void SyncBufFromValue()
+    {
+        _buf = new string(' ', _total).ToCharArray();
+
+        var v = new string((Value ?? "")
+            .Select(c => _alpha ? char.ToUpperInvariant(c) : c)
+            .Where(Accept)
+            .ToArray());
+
+        for (var i = 0; i < v.Length && i < _total; i++) _buf[i] = v[i];
+    }
+
+    private string Compact(string? s) => new((s ?? "").Where(c => c != ' ').ToArray());
+
+    private static (int[] groups, bool alpha, bool grouped, string? prefix) Layout(
+        BzIdentifierType type,
+        int[]? custom,
+        int length,
+        int groupSize)
+    {
+        groupSize = Math.Max(1, groupSize);
+
+        int[] ChunksOf(int total, int size)
+        {
+            var n = (int)Math.Ceiling(total / (double)size);
+            var arr = new int[n];
+
+            for (var i = 0; i < n; i++) arr[i] = Math.Min(size, total - i * size);
+
+            return arr;
+        }
+
+        return type switch
+        {
+            BzIdentifierType.CardNumber => (ChunksOf(16, 4), false, true, null),
+            BzIdentifierType.Iban => (ChunksOf(24, 4), false, true, "IR"),
+            BzIdentifierType.AccountNumber => (ChunksOf(Math.Max(1, length), groupSize), false, true, null),
+            BzIdentifierType.NationalCode => (new[] { 3, 3, 4 }, false, false, null),
+            BzIdentifierType.LegalId => (new[] { 4, 4, 3 }, false, false, null),
+            BzIdentifierType.ForeignerId => (new[] { 4, 4, 4 }, false, false, null),
+            BzIdentifierType.Passport => (new[] { 9 }, true, false, null),
+            _ => custom is { Length: > 0 }
+                ? (custom, false, true, null)
+                : (ChunksOf(Math.Max(1, length), groupSize), false, true, null)
+        };
+    }
+
+    private bool Accept(char c) => _alpha ? char.IsLetterOrDigit(c) : char.IsDigit(c);
+
+    private async Task CommitAsync()
+    {
+        Value = new string(_buf).TrimEnd();
+        Value = Value.Length == 0 ? null : Value;
+
+        if (ValueChanged.HasDelegate) await ValueChanged.InvokeAsync(Value);
+
+        Recompute();
+    }
+
+    private void Recompute()
+    {
+        var raw = Compact(Value);
+
+        var allowed = AllowedBanks is { Count: > 0 }
+            ? AllowedBanks.Select(IranBankData.KeyOf).Where(k => k.Length > 0).ToList()
+            : null;
+
+        _result = IdentifierValidator.Validate(Type, Prefix is "IR" ? "IR" + raw : raw, allowed, Country);
+        _bankColor = IranBankData.BankByKey(_result.BankKey)?.Color;
+
+        if (Type == BzIdentifierType.NationalCode)
+            _location = IranNationalCodeData.Resolve(raw);
+
+        if (OnValidated.HasDelegate) _ = OnValidated.InvokeAsync(_result);
+    }
+
+    // ---------- grouped (one input per group) ----------
+    async Task OnGroupInput(int g, ChangeEventArgs e)
+    {
+        _touched = true;
+
+        var s = PersianHelper.ToLatinDigits(e.Value?.ToString() ?? "") ?? "";
+        var digits = new string(s.Where(char.IsDigit).ToArray());
+        var sz = _groups[g];
+
+        if (digits.Length > sz) digits = digits[..sz];
+
+        var off = GroupOffset(g);
+
+        for (var k = 0; k < sz; k++)
+            _buf[off + k] = k < digits.Length ? digits[k] : ' ';
+
+        await CommitAsync();
+
+        if (digits.Length >= sz && g < _groups.Length - 1)
+            await JS.InvokeVoidAsync("bzFocusById", GroupId(g + 1));
+    }
+
+    async Task OnGroupKey(int g, KeyboardEventArgs e)
+    {
+        if (e.Key == "Backspace" && GroupValue(g).Length == 0 && g > 0)
+            await JS.InvokeVoidAsync("bzFocusById", GroupId(g - 1));
+        else if (e.Key == "ArrowLeft" && g > 0)
+            await JS.InvokeVoidAsync("bzFocusById", GroupId(g - 1));
+        else if (e.Key == "ArrowRight" && g < _groups.Length - 1)
+            await JS.InvokeVoidAsync("bzFocusById", GroupId(g + 1));
+    }
+
+    // ---------- per-cell (one input per digit) ----------
+    async Task OnInput(int idx, ChangeEventArgs e)
+    {
+        _touched = true;
+
+        var s = PersianHelper.ToLatinDigits(e.Value?.ToString() ?? "") ?? "";
+        var filtered = new string(
+            s.Where(Accept)
+             .Select(c => _alpha ? char.ToUpperInvariant(c) : c)
+             .ToArray());
+
+        if (filtered.Length == 0)
+        {
+            if (idx < _buf.Length) _buf[idx] = ' ';
+            await CommitAsync();
+            return;
+        }
+
+        var pos = idx;
+
+        foreach (var ch in filtered)
+        {
+            if (pos >= _total) break;
+            _buf[pos] = ch;
+            pos++;
+        }
+
+        await CommitAsync();
+
+        var next = Math.Min(pos, _total - 1);
+        await JS.InvokeVoidAsync("bzFocusById", CellId(next));
+    }
+
+    async Task OnKeyDown(int idx, KeyboardEventArgs e)
+    {
+        if (e.Key == "Backspace")
+        {
+            if (CharAt(idx).Length == 0 && idx > 0)
+            {
+                _buf[idx - 1] = ' ';
+                await CommitAsync();
+                await JS.InvokeVoidAsync("bzFocusById", CellId(idx - 1));
+            }
+            else
+            {
+                if (idx < _buf.Length) _buf[idx] = ' ';
+                await CommitAsync();
+            }
+        }
+        else if (e.Key == "ArrowLeft" && idx > 0)
+            await JS.InvokeVoidAsync("bzFocusById", CellId(idx - 1));
+        else if (e.Key == "ArrowRight" && idx < _total - 1)
+            await JS.InvokeVoidAsync("bzFocusById", CellId(idx + 1));
+    }
+
+}

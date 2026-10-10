@@ -1,0 +1,30 @@
+@namespace BzCore.Components.Tree
+@typeparam TItem
+@inherits BzComponentBase
+
+@*  BzTreeView — generic hierarchical tree with optional search, single/multi
+    select and per-node actions. Each root is drawn by the recursive BzTreeNode;
+    all state and the public API live in BzTreeView.razor.cs.  *@
+
+@if (Visible)
+{
+    <div class="bz-tree @Class" style="@RootStyle()" id="@Id">
+        @if (Searchable)
+        {
+            <div class="bz-tree__search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="@SearchPlaceholder" value="@_search"
+                       @oninput="@(e => OnSearch(e.Value?.ToString()))" />
+            </div>
+        }
+        <div class="bz-tree__body">
+            @if (Items is not null)
+            {
+                @foreach (var root in Items)
+                {
+                    <BzTreeNode TItem="TItem" Tree="this" Node="root" Level="0" />
+                }
+            }
+        </div>
+    </div>
+}

@@ -1,0 +1,297 @@
+/* ====================  BzWizard  ==================== */
+.bz-wizard {
+    font-family: var(--bz-font-family);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    background: var(--bz-surface);
+    border: var(--bz-border-width, 1px) solid var(--bz-border);
+    border-radius: var(--bz-radius-lg, 16px);
+    padding: 1.25rem 1.5rem;
+}
+
+.bz-wizard__header {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.bz-wizard__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
+    border-top: 1px solid var(--bz-border);
+    padding-top: 1rem;
+}
+
+.bz-wizard__footer-end {
+    display: flex;
+    gap: .5rem;
+    margin-inline-start: auto;
+}
+
+.bz-wizard__content {
+    min-height: 80px;
+}
+
+.bz-wizard__panel {
+    animation: bz-fade-in var(--bz-transition);
+}
+
+/* ---- layout ---- */
+.bz-wizard--horizontal .bz-wizard__layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.bz-wizard--vertical .bz-wizard__layout {
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+}
+
+.bz-wizard--vertical .bz-wizard__steps {
+    flex: 0 0 220px;
+}
+
+.bz-wizard--vertical .bz-wizard__content {
+    flex: 1 1 auto;
+}
+
+/* ---- steps base ---- */
+.bz-wizard__steps {
+    display: flex;
+}
+
+.bz-wizard--horizontal .bz-wizard__steps {
+    flex-direction: row;
+}
+
+.bz-wizard--vertical .bz-wizard__steps {
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.bz-wizard__step {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    cursor: pointer;
+}
+
+.bz-wizard--horizontal .bz-wizard__step {
+    flex: 1 1 0;
+    flex-direction: column;
+    text-align: center;
+    padding: 0 .25rem;
+}
+
+.bz-wizard--vertical .bz-wizard__step {
+    padding: .5rem .25rem;
+}
+
+.bz-wizard__step.is-disabled {
+    cursor: not-allowed;
+    opacity: .5;
+}
+
+.bz-wizard__step.is-upcoming {
+    cursor: default;
+}
+
+.bz-wizard__indicator {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 14px;
+    z-index: 1;
+    background: var(--bz-surface-muted);
+    color: var(--bz-text-muted);
+    border: 2px solid var(--bz-border);
+    transition: all var(--bz-transition);
+}
+
+.bz-wizard__step.is-active .bz-wizard__indicator {
+    background: var(--bz-primary);
+    color: var(--bz-on-primary);
+    border-color: var(--bz-primary);
+    box-shadow: 0 0 0 4px var(--bz-focus-ring);
+}
+
+.bz-wizard__step.is-done .bz-wizard__indicator {
+    background: var(--bz-success);
+    color: #fff;
+    border-color: var(--bz-success);
+}
+
+.bz-wizard__step-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--bz-text);
+}
+
+.bz-wizard__step.is-upcoming .bz-wizard__step-title {
+    color: var(--bz-text-muted);
+}
+
+.bz-wizard__step-sub {
+    font-size: 11.5px;
+    color: var(--bz-text-muted);
+}
+
+.bz-wizard__optional {
+    font-size: 11px;
+    color: var(--bz-text-muted);
+    font-weight: 400;
+}
+
+/* ---- connectors ---- */
+.bz-wizard__connector {
+    position: absolute;
+    background: var(--bz-border);
+    z-index: 0;
+}
+
+.bz-wizard--horizontal .bz-wizard__connector {
+    top: 18px;
+    inset-inline-start: 50%;
+    width: 100%;
+    height: 2px;
+    transform: translateY(-50%);
+}
+
+.bz-wizard--vertical .bz-wizard__connector {
+    inset-inline-start: 18px;
+    top: 36px;
+    width: 2px;
+    height: 100%;
+    transform: translateX(-50%);
+}
+
+.bz-wizard__step.is-done .bz-wizard__connector {
+    background: var(--bz-success);
+}
+
+/* ===== variant: Dots ===== */
+.bz-wizard--dots .bz-wizard__indicator {
+    width: 16px;
+    height: 16px;
+    flex-basis: 16px;
+    font-size: 0;
+    border-width: 2px;
+}
+
+    .bz-wizard--dots .bz-wizard__indicator i {
+        font-size: 0;
+    }
+
+.bz-wizard--dots.bz-wizard--horizontal .bz-wizard__connector {
+    top: 8px;
+}
+
+.bz-wizard--dots.bz-wizard--vertical .bz-wizard__connector {
+    inset-inline-start: 8px;
+    top: 16px;
+}
+
+/* ===== variant: Progress (thicker track) ===== */
+.bz-wizard--progress .bz-wizard__connector {
+    height: 4px;
+    border-radius: 99px;
+}
+
+.bz-wizard--progress.bz-wizard--vertical .bz-wizard__connector {
+    width: 4px;
+}
+
+.bz-wizard--progress .bz-wizard__indicator {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+    font-size: 12px;
+}
+
+.bz-wizard--progress.bz-wizard--horizontal .bz-wizard__connector {
+    top: 14px;
+}
+
+/* ===== variant: Arrows ===== */
+.bz-wizard--arrows .bz-wizard__steps {
+    gap: 0;
+}
+
+.bz-wizard--arrows .bz-wizard__step {
+    flex-direction: row;
+    justify-content: center;
+    gap: .5rem;
+    background: var(--bz-surface-muted);
+    color: var(--bz-text-muted);
+    padding: .7rem 1.25rem;
+    clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 50%, 100% 100%, 14px 100%, 0 50%);
+    margin-inline-end: -8px;
+}
+
+    .bz-wizard--arrows .bz-wizard__step:first-child {
+        /*clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);*/
+    }
+
+    .bz-wizard--arrows .bz-wizard__step.is-active {
+        background: var(--bz-primary);
+        color: var(--bz-on-primary);
+    }
+
+    .bz-wizard--arrows .bz-wizard__step.is-done {
+        background: var(--bz-success);
+        color: #fff;
+    }
+
+.bz-wizard--arrows .bz-wizard__indicator {
+    display: none;
+}
+
+.bz-wizard--arrows .bz-wizard__connector {
+    display: none;
+}
+
+.bz-wizard--arrows .bz-wizard__step-title {
+    color: inherit;
+}
+
+/* ===== variant: Panels ===== */
+.bz-wizard--panels .bz-wizard__steps {
+    gap: .6rem;
+}
+
+.bz-wizard--panels .bz-wizard__step {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: .6rem;
+    background: var(--bz-surface-muted);
+    border: 1px solid var(--bz-border);
+    border-radius: var(--bz-radius);
+    padding: .7rem .9rem;
+}
+
+    .bz-wizard--panels .bz-wizard__step.is-active {
+        border-color: var(--bz-primary);
+        box-shadow: 0 0 0 3px var(--bz-focus-ring);
+    }
+
+    .bz-wizard--panels .bz-wizard__step.is-done {
+        border-color: var(--bz-success);
+    }
+
+.bz-wizard--panels .bz-wizard__connector {
+    display: none;
+}
+
+.bz-wizard--panels.bz-wizard--horizontal .bz-wizard__step {
+    flex: 1 1 0;
+}

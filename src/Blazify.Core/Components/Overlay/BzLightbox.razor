@@ -1,0 +1,46 @@
+@namespace BzCore.Components.Overlay
+@inherits BzComponentBase
+
+@*  BzLightbox — a thumbnail grid that opens a full-screen viewer on click.
+    _activeIndex is null when closed, or the index of the shown image when open.  *@
+
+@if (Visible)
+{
+    <div class="bz-gallery @Class" style="@RootStyle()" id="@Id">
+        @for (var i = 0; i < Images.Count; i++)
+        {
+            var index = i;
+            <button type="button" class="bz-gallery__thumb" @onclick="() => Open(index)">
+                <img src="@Images[index]" alt="" />
+            </button>
+        }
+    </div>
+
+    @if (_activeIndex is not null)
+    {
+        <div class="bz-lightbox" @onclick="Close">
+            <button class="bz-lightbox__nav bz-lightbox__prev" @onclick:stopPropagation="true" @onclick="Prev">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <img src="@Images[_activeIndex.Value]" @onclick:stopPropagation="true" />
+            <button class="bz-lightbox__nav bz-lightbox__next" @onclick:stopPropagation="true" @onclick="Next">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button class="bz-lightbox__close" @onclick="Close"><i class="fa-solid fa-xmark"></i></button>
+            <span class="bz-lightbox__count">@(_activeIndex.Value + 1) / @Images.Count</span>
+        </div>
+    }
+}
+
+@code {
+    /// <summary>Image URLs to show as thumbnails and in the viewer.</summary>
+    [Parameter] public List<string> Images { get; set; } = new();
+
+    private int? _activeIndex;   // null = viewer closed
+
+    private void Open(int i) => _activeIndex = i;
+    private void Close() => _activeIndex = null;
+    // Wrap around at both ends.
+    private void Prev() { if (_activeIndex is not null) _activeIndex = (_activeIndex.Value - 1 + Images.Count) % Images.Count; }
+    private void Next() { if (_activeIndex is not null) _activeIndex = (_activeIndex.Value + 1) % Images.Count; }
+}

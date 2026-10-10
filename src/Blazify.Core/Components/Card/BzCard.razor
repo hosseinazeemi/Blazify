@@ -1,0 +1,65 @@
+@namespace BzCore.Components.Card
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <div class="@CardClass" style="@CardStyle" id="@Id" @onclick="HandleClick">
+
+        @if (HasMedia)
+        {
+            <div class="bz-card__media">
+                @if (Media is not null)
+                {
+                    @Media
+                }
+                else
+                {
+                    <img src="@ImageUrl" alt="@Title" />
+                }
+            </div>
+        }
+
+        <div class="bz-card__inner">
+            @if (HasHeader)
+            {
+                <div class="bz-card__header">
+                    @if (Header is not null)
+                    {
+                        @Header
+                    }
+                    else
+                    {
+                        @if (!string.IsNullOrEmpty(Icon))
+                        {
+                            <span class="bz-card__icon"><i class="@Icon"></i></span>
+                        }
+                        <div class="bz-card__titles">
+                            @if (!string.IsNullOrEmpty(Title))
+                            {
+                                <div class="bz-card__title">@Title</div>
+                            }
+                            @if (!string.IsNullOrEmpty(Subtitle))
+                            {
+                                <div class="bz-card__subtitle">@Subtitle</div>
+                            }
+                        </div>
+                    }
+                    @if (Actions is not null)
+                    {
+                        <div class="bz-card__actions">@Actions</div>
+                    }
+                </div>
+            }
+
+            @if (ChildContent is not null)
+            {
+                <div class="bz-card__body">@ChildContent</div>
+            }
+
+            @if (Footer is not null)
+            {
+                <div class="bz-card__footer">@Footer</div>
+            }
+        </div>
+    </div>
+}

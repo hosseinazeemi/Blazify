@@ -1,0 +1,12 @@
+@namespace BzCore.Components.Display
+@inherits BzComponentBase
+
+
+@if (Visible)
+{
+    <div class="bz-avatar-group @Class" style="@RootStyle()" id="@Id">@ChildContent</div>
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

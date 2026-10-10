@@ -1,0 +1,45 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <label class="bz-switch bz-switch--@(Size.ToString().ToLowerInvariant()) bz-switch--@(Color.ToString().ToLowerInvariant()) @(ShowIcons ? "bz-switch--icons" : "") @(Disabled ? "is-disabled" : "") @(Value ? "is-on" : "") @Class"
+           style="@RootStyle()" id="@Id">
+        <input type="checkbox" checked="@Value" disabled="@Disabled" @onchange="OnToggle" />
+        <span class="bz-switch__track">
+            @if (ShowIcons)
+            {
+                <i class="fa-solid fa-check bz-switch__ic bz-switch__ic--on"></i>
+                <i class="fa-solid fa-xmark bz-switch__ic bz-switch__ic--off"></i>
+            }
+            <span class="bz-switch__thumb"></span>
+        </span>
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <span class="bz-switch__label">@Label</span>
+        }
+    </label>
+}
+
+@code {
+    /// <summary>On/off: two-way bindable</summary>
+    [Parameter] public bool Value { get; set; }
+    [Parameter] public EventCallback<bool> ValueChanged { get; set; }
+    /// <summary>additional OnChange</summary>
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+    /// <summary>Display name or title</summary>
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public BzSize Size { get; set; } = BzSize.Medium;
+    [Parameter] public BzColor Color { get; set; } = BzColor.Primary;
+    [Parameter] public bool ShowIcons { get; set; }
+
+    async Task OnToggle(ChangeEventArgs e)
+    {
+        Value = (bool)(e.Value ?? false);
+        if (ValueChanged.HasDelegate)
+            await ValueChanged.InvokeAsync(Value);
+        if (OnChange.HasDelegate)
+            await OnChange.InvokeAsync(Value);
+    }
+}

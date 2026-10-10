@@ -1,0 +1,70 @@
+/* ====================  BzProgress  ==================== */
+.bz-pg { --c: var(--bz-pg-color, var(--bz-primary)); font-family: var(--bz-font-family); }
+
+/* ---- linear ---- */
+.bz-pg--linear { display: flex; align-items: center; gap: .6rem; width: 100%; }
+.bz-pg__track {
+    flex: 1 1 auto;
+    height: var(--bz-pg-h, 8px);
+    background: color-mix(in srgb, var(--c) 18%, var(--bz-surface-muted));
+    border-radius: 99px;
+    overflow: hidden;
+}
+.bz-pg__bar {
+    height: 100%;
+    background: var(--c);
+    border-radius: inherit;
+    transition: width .35s cubic-bezier(.2,.8,.2,1);
+}
+.bz-pg__label { font-size: 12px; color: var(--bz-text-muted); min-width: 3ch; text-align: end; }
+
+/* striped + animated */
+.bz-pg.is-striped .bz-pg__bar {
+    background-image: linear-gradient(45deg,
+        rgba(255,255,255,.25) 25%, transparent 25%,
+        transparent 50%, rgba(255,255,255,.25) 50%,
+        rgba(255,255,255,.25) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem;
+}
+.bz-pg.is-animated .bz-pg__bar { animation: bz-pg-stripes 1s linear infinite; }
+@keyframes bz-pg-stripes { from { background-position: 1rem 0; } to { background-position: 0 0; } }
+
+/* indeterminate linear */
+.bz-pg--linear.is-indeterminate .bz-pg__bar {
+    width: 40%;
+    animation: bz-pg-slide 1.2s ease-in-out infinite;
+}
+@keyframes bz-pg-slide {
+    0% { transform: translateX(-120%); }
+    100% { transform: translateX(320%); }
+}
+
+/* ---- circular (determinate via conic-gradient) ---- */
+.bz-pg--circular { display: inline-flex; }
+.bz-pg__circle {
+    position: relative;
+    width: var(--bz-pg-size, 72px);
+    height: var(--bz-pg-size, 72px);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: conic-gradient(var(--c) calc(var(--bz-pg-val, 0) * 1%),
+                               color-mix(in srgb, var(--c) 16%, var(--bz-surface-muted)) 0);
+    transition: background .35s linear;
+}
+.bz-pg__circle::before {
+    content: "";
+    position: absolute; inset: 18%;
+    border-radius: 50%;
+    background: var(--bz-surface);
+}
+.bz-pg__c-label { position: relative; z-index: 1; font-size: 13px; font-weight: 700; color: var(--bz-text); }
+
+/* indeterminate circular (ring spin) */
+.bz-pg--circular.is-indeterminate .bz-pg__circle {
+    background: none;
+    border: calc(var(--bz-pg-size, 72px) * .12) solid color-mix(in srgb, var(--c) 20%, transparent);
+    border-top-color: var(--c);
+    animation: bz-pg-spin .8s linear infinite;
+}
+.bz-pg--circular.is-indeterminate .bz-pg__circle::before { display: none; }
+@keyframes bz-pg-spin { to { transform: rotate(360deg); } }

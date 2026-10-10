@@ -1,0 +1,177 @@
+@namespace BzCore.Components.Calendar
+@inherits BzComponentBase
+@using BzCore.Helpers
+
+@if (Visible)
+{
+    <div class="bz-cal @Class" style="@RootStyle()" id="@Id">
+        <div class="bz-cal__head">
+            <button type="button" class="bz-cal__nav" @onclick="HeaderPrev"><i class="fa-solid fa-chevron-right"></i></button>
+            <button type="button" class="bz-cal__title bz-cal__title--btn" @onclick="HeaderClick">@HeaderText</button>
+            <button type="button" class="bz-cal__nav" @onclick="HeaderNext"><i class="fa-solid fa-chevron-left"></i></button>
+            <button type="button" class="bz-cal__today" @onclick="GoToday">امروز</button>
+        </div>
+
+        @if (_pick == CalPick.Days)
+        {
+            <div class="bz-cal__weekdays">
+                @foreach (var w in CalendarHelper.WeekdayHeaders)
+                {
+                    <span>@w</span>
+                }
+            </div>
+
+            <div class="bz-cal__grid">
+                @foreach (var day in CalendarHelper.BuildMonthGrid(_y, _m, Calendar))
+                {
+                    var inMonth = CalendarHelper.InMonth(day, _y, _m, Calendar);
+                    var isToday = CalendarHelper.SameDay(day, CurrentDate);
+                    var isSel = SelectedDate is not null && CalendarHelper.SameDay(day, SelectedDate.Value);
+                    var holiday = IsHoliday(day);
+                    var dayEvents = Events.Where(e => CalendarHelper.SameDay(e.Date, day)).ToList();
+                    var parts = CalendarHelper.GetParts(day, Calendar);
+
+                    <button type="button"
+                            class="bz-cal__cell @(inMonth ? "" : "is-out") @(isToday ? "is-today" : "") @(isSel ? "is-sel" : "") @(holiday || day.DayOfWeek == DayOfWeek.Friday ? "is-holiday" : "")"
+                            @onclick="@(() => Pick(day))">
+                        <span class="bz-cal__num">@Digits(parts.day.ToString())</span>
+                        @if (dayEvents.Count > 0)
+                        {
+                            <span class="bz-cal__dots">
+                                @foreach (var e in dayEvents.Take(3))
+                                {
+                                    <span class="bz-cal__dot bz-cal__dot--@(e.Color.ToString().ToLowerInvariant())" title="@e.Title"></span>
+                                }
+                            </span>
+                        }
+                    </button>
+                }
+            </div>
+        }
+        else if (_pick == CalPick.Months)
+        {
+            <div class="bz-cal__pick">
+                @for (var mo = 1; mo <= 12; mo++)
+                {
+                    var mm = mo;
+                    <button type="button" class="bz-cal__pick-cell @(mm == _m ? "is-active" : "")" @onclick="@(() => PickMonth(mm))">@CalendarHelper.MonthName(mm, Calendar)</button>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="bz-cal__pick bz-cal__pick--years">
+                @foreach (var yr in Enumerable.Range(_yearStart, 12))
+                {
+                    var yy = yr;
+                    <button type="button" class="bz-cal__pick-cell @(yy == _y ? "is-active" : "")" @onclick="@(() => PickYear(yy))">@Digits(yy.ToString())</button>
+                }
+            </div>
+        }
+
+        @if (SelectedDate is not null && SelectedEvents.Count > 0)
+        {
+            <div class="bz-cal__events">
+                @foreach (var e in SelectedEvents)
+                {
+                    <div class="bz-cal__event">
+                        <span class="bz-cal__dot bz-cal__dot--@(e.Color.ToString().ToLowerInvariant())"></span>
+                        <span>@e.Title</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public BzCalendarType Calendar { get; set; } = BzCalendarType.Jalali;
+    [Parameter] public int? Year { get; set; }
+    [Parameter] public int? Month { get; set; }
+    [Parameter] public DateTime? SelectedDate { get; set; }
+    [Parameter] public EventCallback<DateTime> SelectedDateChanged { get; set; }
+    [Parameter] public EventCallback<DateTime> OnDayClick { get; set; }
+    [Parameter] public List<BzCalendarEvent> Events { get; set; } = new();
+    [Parameter] public bool ShowHolidays { get; set; } = true;
+    [Parameter] public DateTime? Today { get; set; }
+    [Parameter] public bool PersianDigits { get; set; }
+    private string Digits(string s) => PersianDigits ? PersianHelper.ToPersianDigits(s) : s;
+    private DateTime CurrentDate => (Today ?? DateTime.Today).Date;
+
+    private int _y, _m;
+    private bool _init;
+
+    private static readonly HashSet<(int, int)> FixedJalaliHolidays = new()
+    {
+        (1,1),(1,2),(1,3),(1,4),(1,12),(1,13),(3,14),(3,15),(11,22),(12,29)
+    };
+
+    protected override void OnParametersSet()
+    {
+        if (!_init)
+        {
+            var p = CalendarHelper.GetParts(SelectedDate ?? CurrentDate, Calendar);
+            _y = Year ?? p.year;
+            _m = Month ?? p.month;
+            _init = true;
+        }
+    }
+
+    private string PersianYear => Digits(_y.ToString());
+
+    private List<BzCalendarEvent> SelectedEvents =>
+        SelectedDate is null ? new() : Events.Where(e => CalendarHelper.SameDay(e.Date, SelectedDate.Value)).ToList();
+
+    private bool IsHoliday(DateTime dt)
+    {
+        if (!ShowHolidays) return false;
+        var p = CalendarHelper.GetParts(dt, Calendar);
+        return FixedJalaliHolidays.Contains((p.month, p.day)) && Calendar == BzCalendarType.Jalali;
+    }
+
+    private void Prev() { var n = CalendarHelper.AddMonths(_y, _m, -1, Calendar); _y = n.year; _m = n.month; }
+    private void Next() { var n = CalendarHelper.AddMonths(_y, _m, 1, Calendar); _y = n.year; _m = n.month; }
+    private void GoToday() { var p = CalendarHelper.GetParts(CurrentDate, Calendar); _y = p.year; _m = p.month; _pick = CalPick.Days; }
+
+    private enum CalPick { Days, Months, Years }
+    private CalPick _pick = CalPick.Days;
+    private int _yearStart;
+
+    private string HeaderText => _pick switch
+    {
+        CalPick.Months => Digits(_y.ToString()),
+        CalPick.Years => $"{Digits(_yearStart.ToString())} - {Digits((_yearStart + 11).ToString())}",
+        _ => $"{CalendarHelper.MonthName(_m, Calendar)} {Digits(_y.ToString())}"
+    };
+
+    private void HeaderClick()
+    {
+        if (_pick == CalPick.Days) _pick = CalPick.Months;
+        else if (_pick == CalPick.Months) { _yearStart = _y - 6; _pick = CalPick.Years; }
+        else _pick = CalPick.Months;
+    }
+
+    private void HeaderPrev()
+    {
+        if (_pick == CalPick.Days) Prev();
+        else if (_pick == CalPick.Months) _y--;
+        else _yearStart -= 12;
+    }
+
+    private void HeaderNext()
+    {
+        if (_pick == CalPick.Days) Next();
+        else if (_pick == CalPick.Months) _y++;
+        else _yearStart += 12;
+    }
+
+    private void PickMonth(int m) { _m = m; _pick = CalPick.Days; }
+    private void PickYear(int y) { _y = y; _pick = CalPick.Months; }
+
+    private async Task Pick(DateTime day)
+    {
+        SelectedDate = day;
+        if (SelectedDateChanged.HasDelegate) await SelectedDateChanged.InvokeAsync(day);
+        if (OnDayClick.HasDelegate) await OnDayClick.InvokeAsync(day);
+    }
+}

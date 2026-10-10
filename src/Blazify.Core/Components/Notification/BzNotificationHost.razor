@@ -1,0 +1,55 @@
+@namespace BzCore.Components.Notification
+@inherits ComponentBase
+@implements IDisposable
+@using BzCore.Enums
+@using BzCore.Notifications
+@inject IBzNotificationService Service
+
+<div class="bz-toast-host bz-toast-host--@PositionClass">
+    @foreach (var toast in Service.Items)
+    {
+        <div class="bz-toast bz-toast--@SeverityHelper.Cls(toast.Severity)" @key="toast.Id" role="alert">
+            <i class="@toast.ResolvedIcon bz-toast__icon"></i>
+            <div class="bz-toast__body">
+                @if (!string.IsNullOrEmpty(toast.Title))
+                {
+                    <div class="bz-toast__title">@toast.Title</div>
+                }
+                @if (toast.Content is not null)
+                {
+                    @toast.Content
+                }
+                else if (!string.IsNullOrEmpty(toast.Message))
+                {
+                    <div class="bz-toast__msg">@toast.Message</div>
+                }
+            </div>
+            @if (toast.Closable)
+            {
+                <button type="button" class="bz-toast__close" @onclick="() => Service.Remove(toast)" aria-label="بستن">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            }
+            @if (toast.ShowProgress && toast.Duration > 0)
+            {
+                <span class="bz-toast__progress" style="animation-duration:@(toast.Duration)ms"></span>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private string PositionClass => Service.Position switch
+    {
+        BzToastPosition.TopStart => "top-start",
+        BzToastPosition.TopCenter => "top-center",
+        BzToastPosition.BottomEnd => "bottom-end",
+        BzToastPosition.BottomStart => "bottom-start",
+        BzToastPosition.BottomCenter => "bottom-center",
+        _ => "top-end"
+    };
+
+    protected override void OnInitialized() => Service.Changed += OnChanged;
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Service.Changed -= OnChanged;
+}

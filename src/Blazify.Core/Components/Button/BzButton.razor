@@ -1,0 +1,51 @@
+@namespace BzCore.Components.Button
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <button @ref="_element"
+            id="@Id"
+            type="@HtmlType"
+            class="@ButtonClass"
+            style="@RootStyle()"
+            disabled="@(IsDisabled || IsBusy)"
+            aria-busy="@IsBusy.ToString().ToLowerInvariant()"
+            tabindex="@TabIndex"
+            @onclick="HandleClickAsync"
+            @attributes="SafeAttributes">
+
+        <span class="bz-btn__loader @(IsBusy ? "is-on" : "")" aria-hidden="true">
+            @switch (LoadingEffect)
+            {
+                case BzLoadingEffect.Dots:
+                    <span class="bz-btn__dots"><i></i><i></i><i></i></span>
+                    break;
+                case BzLoadingEffect.Pulse:
+                    <span class="bz-btn__pulse"></span>
+                    break;
+                default:
+                    <span class="bz-btn__spinner"></span>
+                    break;
+            }
+        </span>
+
+        <span class="bz-btn__content @(IsBusy ? "is-hidden" : "")">
+            @if (!string.IsNullOrEmpty(StartIcon))
+            {
+                <i class="@StartIcon bz-btn__icon bz-btn__icon--start"></i>
+            }
+            @if (ChildContent is not null)
+            {
+                @ChildContent
+            }
+            else if (!string.IsNullOrEmpty(EffectiveText))
+            {
+                <span class="bz-btn__label">@EffectiveText</span>
+            }
+            @if (!string.IsNullOrEmpty(EndIcon))
+            {
+                <i class="@EndIcon bz-btn__icon bz-btn__icon--end"></i>
+            }
+        </span>
+    </button>
+}

@@ -1,0 +1,80 @@
+/* ====================  BzDialog  ==================== */
+.bz-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    font-family: var(--bz-font-family);
+}
+
+.bz-dialog__backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--bz-overlay);
+    backdrop-filter: blur(2px);
+    animation: bz-fade-in var(--bz-transition);
+}
+
+.bz-dialog__box {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bz-surface);
+    color: var(--bz-text);
+    border: var(--bz-border-width, 1px) solid var(--bz-border);
+    border-radius: var(--bz-radius-lg, 16px);
+    box-shadow: var(--bz-shadow-lg);
+    animation: bz-pop-in var(--bz-transition);
+    overflow: hidden;
+}
+
+.bz-dialog__box--small      { max-width: 380px; }
+.bz-dialog__box--medium     { max-width: 540px; }
+.bz-dialog__box--large      { max-width: 760px; }
+.bz-dialog__box--extralarge { max-width: 1040px; }
+.bz-dialog__box--fullscreen { max-width: none; width: 100%; height: 100%; max-height: 100vh; border-radius: 0; }
+
+.bz-dialog__header {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--bz-border);
+}
+.bz-dialog__title { display: flex; align-items: center; gap: .6rem; font-weight: 700; font-size: 15px; }
+.bz-dialog__icon { font-size: 1.15em; }
+.bz-dialog__icon--primary { color: var(--bz-primary); }
+.bz-dialog__icon--success { color: var(--bz-success); }
+.bz-dialog__icon--danger  { color: var(--bz-danger); }
+.bz-dialog__icon--warning { color: var(--bz-warning); }
+.bz-dialog__icon--info    { color: var(--bz-info); }
+
+.bz-dialog__close {
+    width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+    border: none; background: transparent; color: var(--bz-text-muted);
+    border-radius: 50%; cursor: pointer;
+    transition: background-color var(--bz-transition-fast), color var(--bz-transition-fast);
+}
+.bz-dialog__close:hover { background: var(--bz-surface-muted); color: var(--bz-danger); }
+
+.bz-dialog__body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    line-height: 1.7;
+}
+
+.bz-dialog__footer {
+    display: flex; align-items: center; justify-content: flex-start; gap: .6rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--bz-border);
+    background: color-mix(in srgb, var(--bz-surface-muted) 40%, transparent);
+}
+
+/* Let top-layer-like controls escape the scrolling dialog body. The controls
+   decide dynamically whether to open above or below according to viewport room. */
+.bz-dialog__box:has(.bz-select.is-open, .bz-dp.is-open),
+.bz-dialog__body:has(.bz-select.is-open, .bz-dp.is-open) { overflow: visible; }

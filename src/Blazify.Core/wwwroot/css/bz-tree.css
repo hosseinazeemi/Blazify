@@ -1,0 +1,35 @@
+/* ====================  BzTreeView  ==================== */
+.bz-tree { font-family: var(--bz-font-family); width: 100%; }
+.bz-tree__search {
+    display: flex; align-items: center; gap: .5rem; height: 38px; padding: 0 .75rem;
+    background: var(--bz-surface-muted); border: 1px solid var(--bz-border);
+    border-radius: 999px; margin-bottom: .6rem;
+}
+.bz-tree__search i { color: var(--bz-text-muted); font-size: .9em; }
+.bz-tree__search input { flex: 1 1 auto; border: none; outline: none; background: transparent; color: var(--bz-text); font-family: inherit; font-size: 13.5px; }
+
+.bz-tree__row {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .4rem .5rem; border-radius: var(--bz-radius-sm, 6px); cursor: pointer;
+    color: var(--bz-text); font-size: 13.5px;
+    transition: background-color var(--bz-transition-fast);
+}
+.bz-tree__row:hover { background: var(--bz-surface-muted); }
+.bz-tree__row.is-selected { background: color-mix(in srgb, var(--bz-primary) 14%, transparent); color: var(--bz-primary); font-weight: 600; }
+
+.bz-tree__expander {
+    width: 22px; height: 22px; flex: 0 0 22px; border: none; background: transparent;
+    color: var(--bz-text-muted); cursor: pointer; border-radius: 4px;
+    transition: transform var(--bz-transition-fast), background-color var(--bz-transition-fast);
+}
+.bz-tree__expander:hover { background: var(--bz-border); }
+.bz-tree__expander.is-open { transform: rotate(180deg); }
+.bz-tree__leaf { width: 22px; flex: 0 0 22px; }
+
+.bz-tree__check { width: 16px; height: 16px; accent-color: var(--bz-primary); cursor: pointer; }
+.bz-tree__icon { color: var(--bz-text-muted); }
+.bz-tree__label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bz-tree__mark { background: color-mix(in srgb, var(--bz-warning) 45%, transparent); border-radius: 3px; }
+.bz-tree__actions { display: inline-flex; align-items: center; gap: .25rem; opacity: 0; transition: opacity var(--bz-transition-fast); }
+.bz-tree__row:hover .bz-tree__actions { opacity: 1; }
+.bz-tree__children { animation: bz-fade-in var(--bz-transition); }

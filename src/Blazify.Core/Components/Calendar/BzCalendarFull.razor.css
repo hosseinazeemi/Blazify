@@ -1,0 +1,120 @@
+.bz-calf {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    background: var(--bz-surface);
+    border: var(--bz-border-width, 1px) solid var(--bz-border);
+    border-radius: var(--bz-radius-lg, 14px);
+    overflow: hidden;
+    font-family: var(--bz-font-family);
+    color: var(--bz-text);
+}
+
+/* top bar */
+.bz-calf__bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .85rem 1.1rem; border-bottom: 1px solid var(--bz-border);
+    flex: 0 0 auto;
+}
+.bz-calf__nav { display: flex; align-items: center; gap: .4rem; }
+.bz-calf__btn {
+    width: 38px; height: 38px; border: 1px solid var(--bz-border); background: var(--bz-surface); font-family: var(--bz-font-family);
+    border-radius: var(--bz-radius, 10px); cursor: pointer; color: var(--bz-text);
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background var(--bz-transition-fast), color var(--bz-transition-fast);
+}
+.bz-calf__btn:hover { background: color-mix(in srgb, var(--bz-primary) 12%, transparent); color: var(--bz-primary); }
+.bz-calf__title {
+    min-width: 9rem; text-align: center; font-weight: 800; font-size: 1.05rem; font-family: var(--bz-font-family);
+    background: none; border: none; cursor: pointer; color: var(--bz-text);
+    padding: .35rem .8rem; border-radius: var(--bz-radius, 10px);
+}
+.bz-calf__title:hover { background: color-mix(in srgb, var(--bz-primary) 12%, transparent); color: var(--bz-primary); }
+.bz-calf__today {
+    border: 1px solid var(--bz-primary); color: var(--bz-primary); background: transparent;
+    padding: .5rem .9rem; border-radius: var(--bz-radius, 10px); cursor: pointer; font: inherit; font-size: 13px;
+    display: inline-flex; align-items: center; gap: .4rem;
+    transition: background var(--bz-transition-fast), color var(--bz-transition-fast);
+}
+.bz-calf__today:hover { background: var(--bz-primary); color: var(--bz-on-primary, #fff); }
+
+/* weekday header row */
+.bz-calf__weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    flex: 0 0 auto; border-bottom: 1px solid var(--bz-border);
+    background: var(--bz-surface-muted);
+}
+.bz-calf__weekdays span {
+    text-align: center; padding: .6rem 0; font-size: 12.5px; font-weight: 700; color: var(--bz-text-muted);
+}
+
+/* the month grid fills remaining height; rows share it equally */
+.bz-calf__grid {
+    flex: 1 1 auto; min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 1fr;
+}
+
+/* each day is a square-ish box, gridded with separators */
+.bz-calf__cell {
+    border-inline-start: 1px solid var(--bz-border);
+    border-bottom: 1px solid var(--bz-border);
+    padding: .4rem .5rem;
+    display: flex; flex-direction: column; gap: .3rem;
+    cursor: pointer; overflow: hidden; min-height: 0;
+    background: var(--bz-surface);
+    transition: background var(--bz-transition-fast);
+}
+.bz-calf__cell:nth-child(7n) { border-inline-start: none; }   /* last column (RTL-aware via logical prop) */
+.bz-calf__cell:hover { background: color-mix(in srgb, var(--bz-primary) 7%, transparent); }
+.bz-calf__cell.is-out { background: var(--bz-surface-muted); }
+.bz-calf__cell.is-out .bz-calf__num { color: var(--bz-text-muted); opacity: .5; }
+.bz-calf__cell.is-holiday .bz-calf__num { color: var(--bz-danger); }
+.bz-calf__cell.is-sel { background: color-mix(in srgb, var(--bz-primary) 14%, transparent); box-shadow: inset 0 0 0 2px var(--bz-primary); }
+
+.bz-calf__cell-head { display: flex; align-items: center; justify-content: space-between; }
+.bz-calf__num {
+    font-weight: 700; font-size: 14px; line-height: 1;
+    width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+}
+.bz-calf__cell.is-today .bz-calf__num { background: var(--bz-primary); color: var(--bz-on-primary, #fff); }
+.bz-calf__today-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--bz-primary); }
+
+.bz-calf__events { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
+.bz-calf__event {
+    font-size: 11px; line-height: 1.4; padding: 1px 6px; border-radius: 5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    background: color-mix(in srgb, var(--bz-primary) 16%, transparent);
+    color: var(--bz-primary);
+    border-inline-start: 3px solid var(--bz-primary);
+}
+.bz-calf__event--success { background: color-mix(in srgb, var(--bz-success) 16%, transparent); color: var(--bz-success); border-inline-start-color: var(--bz-success); }
+.bz-calf__event--danger  { background: color-mix(in srgb, var(--bz-danger) 16%, transparent);  color: var(--bz-danger);  border-inline-start-color: var(--bz-danger); }
+.bz-calf__event--warning { background: color-mix(in srgb, var(--bz-warning) 16%, transparent); color: var(--bz-warning); border-inline-start-color: var(--bz-warning); }
+.bz-calf__event--info    { background: color-mix(in srgb, var(--bz-info) 16%, transparent);    color: var(--bz-info);    border-inline-start-color: var(--bz-info); }
+.bz-calf__more { font-size: 10.5px; color: var(--bz-text-muted); padding-inline-start: 2px; }
+
+/* month / year quick-pick fills the body */
+.bz-calf__pick {
+    flex: 1 1 auto; min-height: 0;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; padding: 1.25rem;
+    align-content: center;
+}
+.bz-calf__pick--years { grid-template-columns: repeat(4, 1fr); }
+.bz-calf__pick-cell {
+    padding: 1.1rem .4rem; border: 1px solid var(--bz-border); border-radius: var(--bz-radius, 10px);
+    background: var(--bz-surface); color: var(--bz-text); cursor: pointer; font: inherit; font-weight: 600;
+    transition: background var(--bz-transition-fast), color var(--bz-transition-fast);
+}
+.bz-calf__pick-cell:hover { background: color-mix(in srgb, var(--bz-primary) 12%, transparent); color: var(--bz-primary); }
+.bz-calf__pick-cell.is-active { background: var(--bz-primary); color: var(--bz-on-primary, #fff); border-color: var(--bz-primary); }
+
+/* small screens: let it scroll instead of squishing */
+@media (max-width: 640px) {
+    .bz-calf__event { display: none; }
+    .bz-calf__num { width: 24px; height: 24px; font-size: 12.5px; }
+}

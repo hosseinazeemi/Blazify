@@ -1,0 +1,37 @@
+@namespace BzCore.Components.Form
+@typeparam TModel
+@inherits BzComponentBase
+@using BzCore.Validation
+
+@if (Visible)
+{
+    <form @ref="_formEl"
+          id="@Id"
+          class="@FormClass"
+          style="@RootStyle()"
+          @onsubmit="HandleSubmitAsync"
+          @onsubmit:preventDefault="true"
+          novalidate>
+
+        <CascadingValue Value="_editContext" IsFixed="false">
+            <CascadingValue TValue="IBzFormContext" Value="this" IsFixed="true">
+
+                @if (ShowSummary && AllMessages.Any())
+                {
+                    <div class="bz-form__summary" role="alert">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <ul>
+                            @foreach (var msg in AllMessages.Distinct())
+                            {
+                                <li>@msg</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                @ChildContent
+
+            </CascadingValue>
+        </CascadingValue>
+    </form>
+}

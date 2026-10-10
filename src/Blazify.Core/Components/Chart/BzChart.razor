@@ -1,0 +1,109 @@
+@namespace BzCore.Components.Chart
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <div class="@RootClass @(Animate ? "bz-chart--animate" : "")" style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrEmpty(Title))
+        {
+            <div class="bz-chart__title">@Title</div>
+        }
+
+        <div class="bz-chart__canvas" style="height:@Height">
+            <svg viewBox="@ViewBox" preserveAspectRatio="xMidYMid meet" class="bz-chart__svg" role="img">
+
+                @if (IsCartesian && Type != BzChartType.Sparkline && ShowGrid)
+                {
+                    @foreach (var g in GridLines())
+                    {
+                        <line x1="@F(PlotX)" y1="@F(g.Yc)" x2="@F(PlotX + PlotW)" y2="@F(g.Yc)" class="bz-chart__grid" />
+                        <svg:text x="@F(PlotX - 8)" y="@F(g.Yc + 4)" class="bz-chart__axis-y">@g.Label</svg:text>
+                    }
+                    @foreach (var xl in XLabels())
+                    {
+                        <svg:text x="@F(xl.X)" y="@F(PlotY + PlotH + 18)" class="bz-chart__axis-x">@xl.Text</svg:text>
+                    }
+                }
+
+                @switch (Type)
+                {
+                    case BzChartType.Bar:
+                        @foreach (var b in Bars())
+                        {
+                            <rect x="@F(b.X)" y="@F(b.Yc)" width="@F(b.Width)" height="@F(Math.Max(0, b.Height))"
+                                  rx="3" fill="@b.Color" class="bz-chart__bar"
+                                  style="@(Animate ? $"animation-delay:{F(b.Delay)}s" : null)">
+                                <title>@F(b.Value)</title>
+                            </rect>
+                            @if (ShowValues)
+                            {
+                                <svg:text x="@F(b.X + b.Width / 2)" y="@F(b.Yc - 5)" class="bz-chart__value">@F(b.Value)</svg:text>
+                            }
+                        }
+                        break;
+
+                    case BzChartType.Area:
+                        @foreach (var sp in Lines())
+                        {
+                            <path d="@sp.AreaPath" fill="@sp.Color" class="bz-chart__area" />
+                            <polyline points="@sp.Points" fill="none" stroke="@sp.Color" class="bz-chart__line" />
+                        }
+                        break;
+
+                    case BzChartType.Line:
+                    case BzChartType.Sparkline:
+                        @foreach (var sp in Lines())
+                        {
+                            <polyline points="@sp.Points" fill="none" stroke="@sp.Color"
+                                      class="bz-chart__line @(Type == BzChartType.Sparkline ? "bz-chart__line--spark" : "")" />
+                            @if (Type == BzChartType.Line)
+                            {
+                                @foreach (var d in sp.Dots)
+                                {
+                                    <circle cx="@F(d.X)" cy="@F(d.Y)" r="3.5" fill="var(--bz-surface)" stroke="@sp.Color" stroke-width="2" class="bz-chart__dot" />
+                                }
+                            }
+                        }
+                        break;
+
+                    case BzChartType.Pie:
+                    case BzChartType.Donut:
+                        @foreach (var sl in Slices())
+                        {
+                            <path d="@sl.Path" fill="@sl.Color" class="bz-chart__slice" stroke="var(--bz-surface)" stroke-width="2">
+                                <title>@sl.Label (@F(sl.Percent)%)</title>
+                            </path>
+                        }
+                        @if (Type == BzChartType.Donut)
+                        {
+                            <circle cx="@F(W / 2)" cy="@F(H / 2)" r="@F(DonutHoleRadius)" fill="var(--bz-surface)" />
+                        }
+                        @if (ShowValues)
+                        {
+                            @foreach (var sl in Slices())
+                            {
+                                @if (sl.Percent >= 6)
+                                {
+                                    <svg:text x="@F(sl.LabelX)" y="@F(sl.LabelY)" class="bz-chart__slice-label">@F(sl.Percent)%</svg:text>
+                                }
+                            }
+                        }
+                        break;
+                }
+            </svg>
+        </div>
+
+        @if (ShowLegend)
+        {
+            <div class="bz-chart__legend">
+                @foreach (var item in Legend())
+                {
+                    <span class="bz-chart__legend-item">
+                        <span class="bz-chart__legend-swatch" style="background:@item.Color"></span>
+                        @item.Label
+                    </span>
+                }
+            </div>
+        }
+    </div>
+}

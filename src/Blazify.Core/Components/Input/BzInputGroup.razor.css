@@ -1,0 +1,123 @@
+.bz-ig-wrap { display: flex; flex-direction: column; gap: .4rem; font-family: var(--bz-font-family); }
+.bz-ig__label { font-size: 13px; font-weight: 600; color: var(--bz-text); }
+.bz-ig__hint { font-size: 12px; color: var(--bz-text-muted); }
+
+.bz-ig {
+    display: flex;
+    align-items: stretch;
+    height: var(--bz-control-h, 42px);
+    background: var(--bz-surface);
+    color: var(--bz-text);
+}
+.bz-ig.is-disabled { opacity: .6; pointer-events: none; }
+
+.bz-ig__input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--bz-font-size, 14px);
+    padding: 0 .75rem;
+}
+.bz-ig__input::placeholder { color: var(--bz-text-muted); }
+
+.bz-ig__addon {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: 0 .75rem;
+    color: var(--bz-text-muted);
+    white-space: nowrap;
+    font-size: 13px;
+}
+.bz-ig__addon button,
+.bz-ig__addon .bz-ig-btn {
+    border: none; background: transparent; cursor: pointer; color: inherit; font: inherit;
+    display: inline-flex; align-items: center; gap: .35rem; padding: 0 .25rem;
+}
+
+/* ---------- 1) Default: bordered, flush addons with separators ---------- */
+.bz-ig--default {
+    border: 1px solid var(--bz-border);
+    border-radius: var(--bz-radius, 10px);
+    overflow: hidden;
+    transition: border-color var(--bz-transition-fast), box-shadow var(--bz-transition-fast);
+}
+.bz-ig--default.is-focused { border-color: var(--bz-primary); box-shadow: 0 0 0 3px var(--bz-focus-ring); }
+.bz-ig--default .bz-ig__addon { background: var(--bz-surface-muted); }
+.bz-ig--default .bz-ig__addon--prepend { border-inline-end: 1px solid var(--bz-border); }
+.bz-ig--default .bz-ig__addon--append { border-inline-start: 1px solid var(--bz-border); }
+
+/* ---------- 2) Filled: soft background, borderless ---------- */
+.bz-ig--filled {
+    background: var(--bz-surface-muted);
+    border: 1px solid transparent;
+    border-radius: var(--bz-radius, 10px);
+    overflow: hidden;
+    transition: background var(--bz-transition-fast), border-color var(--bz-transition-fast);
+}
+.bz-ig--filled.is-focused { background: var(--bz-surface); border-color: var(--bz-primary); }
+.bz-ig--filled .bz-ig__addon { color: var(--bz-text); font-weight: 600; }
+
+/* ---------- 3) Outlined: tinted addons ---------- */
+.bz-ig--outlined {
+    border: 1.5px solid var(--bz-border);
+    border-radius: var(--bz-radius, 10px);
+    overflow: hidden;
+    transition: border-color var(--bz-transition-fast), box-shadow var(--bz-transition-fast);
+}
+.bz-ig--outlined.is-focused { border-color: var(--bz-primary); box-shadow: 0 0 0 3px var(--bz-focus-ring); }
+.bz-ig--outlined .bz-ig__addon {
+    background: color-mix(in srgb, var(--bz-primary) 10%, transparent);
+    color: var(--bz-primary);
+    font-weight: 600;
+}
+
+/* ---------- 4) Pill: fully rounded ends ---------- */
+.bz-ig--pill {
+    border: 1px solid var(--bz-border);
+    border-radius: 999px;
+    overflow: hidden;
+    transition: border-color var(--bz-transition-fast), box-shadow var(--bz-transition-fast);
+}
+.bz-ig--pill.is-focused { border-color: var(--bz-primary); box-shadow: 0 0 0 3px var(--bz-focus-ring); }
+.bz-ig--pill .bz-ig__input { padding-inline: 1rem; }
+.bz-ig--pill .bz-ig__addon { background: var(--bz-surface-muted); }
+.bz-ig--pill .bz-ig__addon--prepend { padding-inline-start: 1.1rem; }
+.bz-ig--pill .bz-ig__addon--append { padding-inline-end: 1.1rem; }
+
+/* ---------- 5) Underline: bottom border only ---------- */
+.bz-ig--underline {
+    border: none;
+    border-bottom: 2px solid var(--bz-border);
+    border-radius: 0;
+    background: transparent;
+    transition: border-color var(--bz-transition-fast);
+}
+.bz-ig--underline.is-focused { border-bottom-color: var(--bz-primary); }
+.bz-ig--underline .bz-ig__input { padding-inline: .35rem; }
+.bz-ig--underline .bz-ig__addon { color: var(--bz-text-muted); }
+
+/* ---------- 6) Seamless: detached chip addons with gaps ---------- */
+.bz-ig--seamless {
+    gap: .5rem;
+    background: transparent;
+    height: auto;
+}
+.bz-ig--seamless .bz-ig__input {
+    border: 1px solid var(--bz-border);
+    border-radius: var(--bz-radius, 10px);
+    height: var(--bz-control-h, 42px);
+    background: var(--bz-surface);
+    transition: border-color var(--bz-transition-fast), box-shadow var(--bz-transition-fast);
+}
+.bz-ig--seamless.is-focused .bz-ig__input { border-color: var(--bz-primary); box-shadow: 0 0 0 3px var(--bz-focus-ring); }
+.bz-ig--seamless .bz-ig__addon {
+    border: 1px solid var(--bz-border);
+    border-radius: var(--bz-radius, 10px);
+    background: var(--bz-surface-muted);
+    height: var(--bz-control-h, 42px);
+}

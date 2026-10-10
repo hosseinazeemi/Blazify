@@ -1,0 +1,183 @@
+@namespace BzCore.Components.Notification
+@inherits BzComponentBase
+
+@if (Visible && _items.Count > 0)
+{
+    <div class="bz-opmsg @(Grouped ? "bz-opmsg--grouped" : "") @Class" style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrEmpty(Title))
+        {
+            <div class="bz-opmsg__heading">@Title</div>
+        }
+
+        @if (Grouped)
+        {
+            @foreach (var grp in _items.GroupBy(i => i.Status).OrderBy(g => (int)g.Key))
+            {
+                <div class="bz-opmsg__group bz-opmsg--@(grp.Key.ToString().ToLowerInvariant())">
+                    <div class="bz-opmsg__group-head">
+                        <i class="@IconFor(grp.Key)"></i>
+                        <span>@LabelFor(grp.Key)</span>
+                        <span class="bz-opmsg__count">@grp.Count()</span>
+                        @if (Dismissible)
+                        {
+                            <button type="button" class="bz-opmsg__group-clear" @onclick="@(() => Clear(grp.Key))" aria-label="پاک کردن گروه">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        }
+                    </div>
+                    @foreach (var item in grp.OrderByDescending(i => i.Time))
+                    {
+                        @RenderItem(item, compact: true)
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            @foreach (var item in _items.OrderByDescending(i => i.Time))
+            {
+                @RenderItem(item, compact: false)
+            }
+        }
+    </div>
+}
+
+@code {
+    private readonly List<BzOperationItem> _items = new();
+
+    /// <summary>Optional initial messages.</summary>
+    [Parameter] public List<BzOperationItem>? Items { get; set; }
+    /// <summary>Group messages by status with a header per group.</summary>
+    [Parameter] public bool Grouped { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public bool ShowIcon { get; set; } = true;
+    [Parameter] public bool ShowTime { get; set; } = true;
+    /// <summary>Show per-item / per-group dismiss buttons.</summary>
+    [Parameter] public bool Dismissible { get; set; } = true;
+    /// <summary>Keep at most this many messages (oldest dropped). Null = unlimited.</summary>
+    [Parameter] public int? Max { get; set; }
+    /// <summary>Raised whenever the message set changes.</summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (Items is not null) _items.AddRange(Items);
+    }
+
+    // ---- public realtime API ----
+
+    /// <summary>Append a message to the existing ones.</summary>
+    public void Add(BzOpStatus status, string text, string? title = null)
+        => AddItem(new BzOperationItem(status, text, title));
+
+    public void Add(BzOperationItem item) => AddItem(item);
+
+    public void Success(string text, string? title = null) => Add(BzOpStatus.Success, text, title);
+    public void Error(string text, string? title = null) => Add(BzOpStatus.Error, text, title);
+    public void Warning(string text, string? title = null) => Add(BzOpStatus.Warning, text, title);
+    public void Info(string text, string? title = null) => Add(BzOpStatus.Info, text, title);
+    public void News(string text, string? title = null) => Add(BzOpStatus.News, text, title);
+
+    /// <summary>Clear everything, then show a single message.</summary>
+    public void Replace(BzOpStatus status, string text, string? title = null)
+    {
+        _items.Clear();
+        AddItem(new BzOperationItem(status, text, title));
+    }
+
+    /// <summary>Replace all messages with the given set.</summary>
+    public void Set(IEnumerable<BzOperationItem> items)
+    {
+        _items.Clear();
+        _items.AddRange(items);
+        Trim();
+        Notify();
+    }
+
+    public void Remove(string id)
+    {
+        var removed = _items.RemoveAll(i => i.Id == id) > 0;
+        if (removed) Notify();
+    }
+
+    /// <summary>Clear messages of a given status.</summary>
+    public void Clear(BzOpStatus status)
+    {
+        if (_items.RemoveAll(i => i.Status == status) > 0) Notify();
+    }
+
+    /// <summary>Clear all messages.</summary>
+    public void ClearAll()
+    {
+        if (_items.Count == 0) return;
+        _items.Clear();
+        Notify();
+    }
+
+    public int Count => _items.Count;
+
+
+    private void AddItem(BzOperationItem item)
+    {
+        _items.Add(item);
+        Trim();
+        Notify();
+    }
+
+    private void Trim()
+    {
+        if (Max is int max && max > 0)
+            while (_items.Count > max)
+                _items.RemoveAt(0);
+    }
+
+    private void Notify()
+    {
+        StateHasChanged();
+        if (OnChanged.HasDelegate) _ = OnChanged.InvokeAsync();
+    }
+
+    private RenderFragment RenderItem(BzOperationItem item, bool compact) =>
+        @<div class="bz-opmsg__item bz-opmsg--@(item.Status.ToString().ToLowerInvariant()) @(compact ? "is-compact" : "")">
+            @if (ShowIcon)
+            {
+                <i class="bz-opmsg__icon @IconFor(item.Status)"></i>
+            }
+            <div class="bz-opmsg__body">
+                @if (!string.IsNullOrEmpty(item.Title))
+                {
+                    <div class="bz-opmsg__title">@item.Title</div>
+                }
+                <div class="bz-opmsg__text">@item.Text</div>
+            </div>
+            @if (ShowTime)
+            {
+                <span class="bz-opmsg__time">@item.Time.ToString("HH:mm")</span>
+            }
+            @if (Dismissible)
+            {
+                <button type="button" class="bz-opmsg__close" @onclick="@(() => Remove(item.Id))" aria-label="بستن">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            }
+        </div>;
+
+    private static string IconFor(BzOpStatus s) => s switch
+    {
+        BzOpStatus.Success => "fa-solid fa-circle-check",
+        BzOpStatus.Error => "fa-solid fa-circle-xmark",
+        BzOpStatus.Warning => "fa-solid fa-triangle-exclamation",
+        BzOpStatus.News => "fa-solid fa-bullhorn",
+        _ => "fa-solid fa-circle-info"
+    };
+
+    private static string LabelFor(BzOpStatus s) => s switch
+    {
+        BzOpStatus.Success => "موفق",
+        BzOpStatus.Error => "ناموفق",
+        BzOpStatus.Warning => "اخطار",
+        BzOpStatus.News => "اخبار",
+        _ => "اطلاعات"
+    };
+}

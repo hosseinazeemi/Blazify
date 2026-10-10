@@ -1,0 +1,19 @@
+@namespace BzCore.Components.Document
+@inherits Blazify.Core.Base.BzComponentBase
+
+@* Keeps its content on a single sheet.
+
+   Wrap a signature block, a small table or a figure with its caption so the
+   print engine never splits it across two pages. *@
+
+@if (Visible)
+{
+    <div class="@RootCss("bz-keep-together").Build()" style="@RootStyle().Build()" id="@Id">
+        @ChildContent
+    </div>
+}
+
+@code {
+    /// <summary>Content that must not be split across pages.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

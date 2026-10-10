@@ -1,0 +1,19 @@
+@namespace BzCore.Components.Navigation
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <nav class="bz-menu bz-menu--@(Variant.ToString().ToLowerInvariant()) bz-menu--@(Orientation.ToString().ToLowerInvariant()) @Class"
+         style="@RootStyle()" id="@Id">
+        @foreach (var item in Items ?? Enumerable.Empty<BzMenuItem>())
+        {
+            <BzMenuNode Item="item" Level="0" />
+        }
+    </nav>
+}
+
+@code {
+    [Parameter] public List<BzMenuItem>? Items { get; set; } = new();
+    [Parameter] public BzMenuVariant Variant { get; set; } = BzMenuVariant.Underline;
+    [Parameter] public BzOrientation Orientation { get; set; } = BzOrientation.Horizontal;
+}

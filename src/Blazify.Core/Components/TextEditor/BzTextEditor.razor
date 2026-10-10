@@ -1,0 +1,623 @@
+@namespace BzCore.Components.TextEditor
+@inherits Blazify.Core.Base.BzComponentBase
+@using BzCore.Components.Button
+@using BzCore.Components.Dialog
+@using BzCore.Components.Input
+@using BzCore.Components.Form
+@using BzCore.Enums
+@using Microsoft.AspNetCore.Components.Forms
+
+@if (Visible)
+{
+    <div class="@RootCss("bz-te").AddIf(_fullscreen, "bz-te--fullscreen").AddIf(!string.IsNullOrEmpty(Error), "bz-te--error").AddIf(ReadOnly, "bz-te--readonly").Build()"
+         style="@RootStyle().Build()" dir="@DirAttr" id="@Id">
+
+        @if (!string.IsNullOrWhiteSpace(Label))
+        {
+            <label class="bz-te__label" for="@($"{Id}-surface")">
+                @Label
+                @if (Required)
+                {
+                    <span class="bz-te__req">*</span>
+                }
+            </label>
+        }
+
+        <div class="bz-te__frame">
+
+            @* ---------------- toolbar ---------------- *@
+            <div class="bz-te__toolbar @(StickyToolbar ? "bz-te__toolbar--sticky" : "")"
+                 @ref="_toolbar" role="toolbar">
+
+                @if (HasAny(BzEditorTools.History))
+                {
+                    <div class="bz-te__group">
+                        @if (Has(BzEditorTools.Undo))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "برگرد" : "Undo")"
+                                    @onclick="@(() => ExecAsync("undo"))">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.Redo))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "دوباره" : "Redo")"
+                                    @onclick="@(() => ExecAsync("redo"))">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+                        }
+                    </div>
+                }
+
+                @if (Has(BzEditorTools.Heading))
+                {
+                    <div class="bz-te__group">
+                        <div class="bz-te__dd">
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn bz-te__btn--wide" @onclick="@(() => ToggleMenu("block"))">
+                                <span>@BlockLabel(_state.Block)</span>
+                                <i class="fa-solid fa-chevron-down bz-te__caret"></i>
+                            </button>
+                            @if (_menu == "block")
+                            {
+                                <div class="bz-te__menu bz-te__menu--block">
+                                    @foreach (var (tag, label) in Blocks)
+                                    {
+                                        <button @onmousedown:preventDefault="true" type="button" class="bz-te__mi @(_state.Block == tag ? "is-active" : "")"
+                                                @onclick="@(() => ApplyBlock(tag))">
+                                            <span class="bz-te__mi-preview bz-te__mi-preview--@tag">@label</span>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (HasAny(BzEditorTools.Typography))
+                {
+                    <div class="bz-te__group">
+                        @if (Has(BzEditorTools.FontFamily))
+                        {
+                            <div class="bz-te__dd">
+                                <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn bz-te__btn--wide" title="@(Fa ? "فونت" : "Font")"
+                                        @onclick="@(() => ToggleMenu("font"))">
+                                    <i class="fa-solid fa-font"></i>
+                                    <i class="fa-solid fa-chevron-down bz-te__caret"></i>
+                                </button>
+                                @if (_menu == "font")
+                                {
+                                    <div class="bz-te__menu">
+                                        @foreach (var f in FontList)
+                                        {
+                                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__mi" style="font-family:@f.Stack"
+                                                    @onclick="@(() => ApplyFont(f.Stack))">
+                                                @f.Label
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        @if (Has(BzEditorTools.FontSize))
+                        {
+                            <div class="bz-te__dd">
+                                <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn bz-te__btn--wide" title="@(Fa ? "اندازه" : "Size")"
+                                        @onclick="@(() => ToggleMenu("size"))">
+                                    <i class="fa-solid fa-text-height"></i>
+                                    <i class="fa-solid fa-chevron-down bz-te__caret"></i>
+                                </button>
+                                @if (_menu == "size")
+                                {
+                                    <div class="bz-te__menu bz-te__menu--narrow">
+                                        @foreach (var s in FontSizes)
+                                        {
+                                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__mi" @onclick="@(() => ApplyFontSize(s))">@s</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        @if (Has(BzEditorTools.LineHeight))
+                        {
+                            <div class="bz-te__dd">
+                                <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "فاصله خطوط" : "Line height")"
+                                        @onclick="@(() => ToggleMenu("lh"))">
+                                    <i class="fa-solid fa-bars"></i>
+                                </button>
+                                @if (_menu == "lh")
+                                {
+                                    <div class="bz-te__menu bz-te__menu--narrow">
+                                        @foreach (var lh in new[] { "1", "1.5", "1.8", "2", "2.5", "3" })
+                                        {
+                                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__mi" @onclick="@(() => ApplyLineHeight(lh))">@lh</button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (HasAny(BzEditorTools.Inline) || HasAny(BzEditorTools.Script))
+                {
+                    <div class="bz-te__group">
+                        @if (Has(BzEditorTools.Bold))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Bold ? "is-active" : "")" title="@(Fa ? "توپر" : "Bold")"
+                                    @onclick="@(() => ExecAsync("bold"))">
+                                <i class="fa-solid fa-bold"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.Italic))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Italic ? "is-active" : "")" title="@(Fa ? "مورب" : "Italic")"
+                                    @onclick="@(() => ExecAsync("italic"))">
+                                <i class="fa-solid fa-italic"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.Underline))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Underline ? "is-active" : "")" title="@(Fa ? "زیرخط" : "Underline")"
+                                    @onclick="@(() => ExecAsync("underline"))">
+                                <i class="fa-solid fa-underline"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.Strike))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Strike ? "is-active" : "")" title="@(Fa ? "خط خورده" : "Strikethrough")"
+                                    @onclick="@(() => ExecAsync("strikeThrough"))">
+                                <i class="fa-solid fa-strikethrough"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.Subscript))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Subscript ? "is-active" : "")" title="@(Fa ? "زیرنویس" : "Subscript")"
+                                    @onclick="@(() => ExecAsync("subscript"))">
+                                <i class="fa-solid fa-subscript"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.Superscript))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Superscript ? "is-active" : "")" title="@(Fa ? "بالانویس" : "Superscript")"
+                                    @onclick="@(() => ExecAsync("superscript"))">
+                                <i class="fa-solid fa-superscript"></i>
+                            </button>
+                        }
+                    </div>
+                }
+
+                @if (HasAny(BzEditorTools.Colors))
+                {
+                    <div class="bz-te__group">
+                        @if (Has(BzEditorTools.TextColor))
+                        {
+                            <div class="bz-te__dd">
+                                <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "رنگ متن" : "Text colour")"
+                                        @onclick="@(() => ToggleMenu("color"))">
+                                    <i class="fa-solid fa-palette"></i>
+                                </button>
+                                @if (_menu == "color")
+                                {
+                                    <div class="bz-te__menu bz-te__swatches">
+                                        @foreach (var c in Palette)
+                                        {
+                                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__swatch" style="background:@c" title="@c"
+                                                    @onclick="@(() => ApplyColor(c))"></button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        @if (Has(BzEditorTools.Highlight))
+                        {
+                            <div class="bz-te__dd">
+                                <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "هایلایت" : "Highlight")"
+                                        @onclick="@(() => ToggleMenu("hl"))">
+                                    <i class="fa-solid fa-highlighter"></i>
+                                </button>
+                                @if (_menu == "hl")
+                                {
+                                    <div class="bz-te__menu bz-te__swatches">
+                                        <button @onmousedown:preventDefault="true" type="button" class="bz-te__swatch bz-te__swatch--none" title="@(Fa ? "بدون رنگ" : "None")"
+                                                @onclick="@(() => ApplyHighlight("transparent"))"></button>
+                                        @foreach (var c in Palette)
+                                        {
+                                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__swatch" style="background:@c" title="@c"
+                                                    @onclick="@(() => ApplyHighlight(c))"></button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (HasAny(BzEditorTools.Alignment))
+                {
+                    <div class="bz-te__group">
+                        @if (Has(BzEditorTools.AlignStart))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Align == "start" ? "is-active" : "")"
+                                    title="@(Fa ? "چین ابتدا" : "Align start")"
+                                    @onclick="@(() => SetAlignAsync("start"))">
+                                <i class="fa-solid fa-align-@(Rtl ? "right" : "left")"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.AlignCenter))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Align == "center" ? "is-active" : "")"
+                                    title="@(Fa ? "وسط چین" : "Align centre")"
+                                    @onclick="@(() => SetAlignAsync("center"))">
+                                <i class="fa-solid fa-align-center"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.AlignEnd))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Align == "end" ? "is-active" : "")"
+                                    title="@(Fa ? "چین انتها" : "Align end")"
+                                    @onclick="@(() => SetAlignAsync("end"))">
+                                <i class="fa-solid fa-align-@(Rtl ? "left" : "right")"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.AlignJustify))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Align == "justify" ? "is-active" : "")"
+                                    title="@(Fa ? "هم تراز" : "Justify")"
+                                    @onclick="@(() => SetAlignAsync("justify"))">
+                                <i class="fa-solid fa-align-justify"></i>
+                            </button>
+                        }
+                    </div>
+                }
+
+                @if (HasAny(BzEditorTools.Direction))
+                {
+                    <div class="bz-te__group">
+                        @if (Has(BzEditorTools.DirRtl))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Dir == "rtl" ? "is-active" : "")"
+                                    title="@(Fa ? "راست به چپ" : "Right to left")"
+                                    @onclick="@(() => SetDirectionAsync("rtl"))">
+                                <i class="fa-solid fa-align-right"></i><span class="bz-te__tag">RTL</span>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.DirLtr))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Dir == "ltr" ? "is-active" : "")"
+                                    title="@(Fa ? "چپ به راست" : "Left to right")"
+                                    @onclick="@(() => SetDirectionAsync("ltr"))">
+                                <i class="fa-solid fa-align-left"></i><span class="bz-te__tag">LTR</span>
+                            </button>
+                        }
+                    </div>
+                }
+
+                @if (HasAny(BzEditorTools.Lists))
+                {
+                    <div class="bz-te__group">
+                        @if (Has(BzEditorTools.BulletList))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.BulletList ? "is-active" : "")" title="@(Fa ? "لیست نقطه ای" : "Bullet list")"
+                                    @onclick="@(() => ExecAsync("insertUnorderedList"))">
+                                <i class="fa-solid fa-list-ul"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.NumberList))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.NumberList ? "is-active" : "")" title="@(Fa ? "لیست شماره دار" : "Numbered list")"
+                                    @onclick="@(() => ExecAsync("insertOrderedList"))">
+                                <i class="fa-solid fa-list-ol"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.Outdent))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "کاهش تورفتگی" : "Outdent")"
+                                    @onclick="@(() => ExecAsync("outdent"))">
+                                <i class="fa-solid fa-outdent"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.Indent))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "افزایش تورفتگی" : "Indent")"
+                                    @onclick="@(() => ExecAsync("indent"))">
+                                <i class="fa-solid fa-indent"></i>
+                            </button>
+                        }
+                    </div>
+                }
+
+                @if (HasAny(BzEditorTools.Blocks))
+                {
+                    <div class="bz-te__group">
+                        @if (Has(BzEditorTools.Quote))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Quote ? "is-active" : "")" title="@(Fa ? "نقل قول" : "Quote")"
+                                    @onclick="InsertQuote">
+                                <i class="fa-solid fa-quote-right"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.CodeBlock))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_state.Block == "pre" ? "is-active" : "")" title="@(Fa ? "بلاک کد" : "Code block")"
+                                    @onclick="InsertCode">
+                                <i class="fa-solid fa-code"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.HorizontalRule))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "خط افقی" : "Horizontal rule")"
+                                    @onclick="InsertHr">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                        }
+                    </div>
+                }
+
+                @if (HasAny(BzEditorTools.Insert))
+                {
+                    <div class="bz-te__group">
+                        @if (Has(BzEditorTools.Link))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "پیوند" : "Link")"
+                                    @onclick="OpenLink">
+                                <i class="fa-solid fa-link"></i>
+                            </button>
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "حذف پیوند" : "Remove link")"
+                                    @onclick="RemoveLink">
+                                <i class="fa-solid fa-link-slash"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.Image))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "تصویر" : "Image")"
+                                    @onclick="OpenImage">
+                                <i class="fa-solid fa-image"></i>
+                            </button>
+                        }
+                        @if (Has(BzEditorTools.Table))
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "جدول" : "Table")"
+                                    @onclick="OpenTable">
+                                <i class="fa-solid fa-table"></i>
+                            </button>
+                        }
+                    </div>
+                }
+
+                <div class="bz-te__group bz-te__group--end">
+                    @if (Has(BzEditorTools.ClearFormat))
+                    {
+                        <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "پاک کردن قالب" : "Clear formatting")"
+                                @onclick="ClearFormatting">
+                            <i class="fa-solid fa-eraser"></i>
+                        </button>
+                    }
+                    @if (Has(BzEditorTools.Source))
+                    {
+                        <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn @(_source ? "is-active" : "")" title="@(Fa ? "کد HTML" : "HTML source")"
+                                @onclick="ToggleSource">
+                            <i class="fa-solid fa-file-code"></i>
+                        </button>
+                    }
+                    @if (Has(BzEditorTools.Print))
+                    {
+                        <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "چاپ" : "Print")"
+                                @onclick="PrintAsync">
+                            <i class="fa-solid fa-print"></i>
+                        </button>
+                    }
+                    @if (Has(BzEditorTools.Fullscreen))
+                    {
+                        <button @onmousedown:preventDefault="true" type="button" class="bz-te__btn" title="@(Fa ? "تمام صفحه" : "Fullscreen")"
+                                @onclick="ToggleFullscreen">
+                            <i class="fa-solid @(_fullscreen ? "fa-compress" : "fa-expand")"></i>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @* click-away closes any open dropdown, no JS needed *@
+            @if (_menu is not null)
+            {
+                <div class="bz-te__backdrop" @onclick="@(() => _menu = null)"></div>
+            }
+
+            @* ---------------- editing surface ---------------- *@
+            <div class="bz-te__body" style="height:@Height; @(MaxHeight is null ? "" : $"max-height:{MaxHeight};")">
+                @if (_source)
+                {
+                    <textarea class="bz-te__source" spellcheck="false" dir="ltr"
+                              value="@_html" @oninput="OnSourceInput"></textarea>
+                }
+                else
+                {
+                    @* Blazor renders this element with NO children and never diffs inside it.
+                   The Blazify JavaScript bundle owns everything within. *@
+                    <div @ref="_surface"
+                         id="@($"{Id}-surface")"
+                         class="bz-te__surface"
+                         contenteditable="@(ReadOnly ? "false" : "true")"
+                         dir="@DirAttr"
+                         data-placeholder="@Placeholder"
+                         spellcheck="true"
+                         role="textbox"
+                         aria-multiline="true"></div>
+                }
+            </div>
+
+            @* ---------------- image panel ---------------- *@
+            @if (_image.Selected && !_source && !ReadOnly)
+            {
+                <div class="bz-te__imgbar">
+                    <span class="bz-te__imgbar-title"><i class="fa-solid fa-image"></i> @(Fa ? "تصویر" : "Image")</span>
+
+                    <div class="bz-te__imgbar-group">
+                        <span class="bz-te__imgbar-label">@(Fa ? "عرض" : "Width")</span>
+                        @foreach (var w in new[] { "25%", "50%", "75%", "100%" })
+                        {
+                            <button @onmousedown:preventDefault="true" type="button" class="bz-te__chip @(_image.Width == w ? "is-active" : "")"
+                                    @onclick="@(() => SetImageWidth(w))">
+                                @w
+                            </button>
+                        }
+                        <button @onmousedown:preventDefault="true" type="button" class="bz-te__chip @(string.IsNullOrEmpty(_image.Width) ? "is-active" : "")"
+                                @onclick="@(() => SetImageWidth(""))">
+                            @(Fa ? "اصلی" : "Auto")
+                        </button>
+                    </div>
+
+                    <div class="bz-te__imgbar-group">
+                        <span class="bz-te__imgbar-label">@(Fa ? "چیدمان" : "Align")</span>
+                        <button @onmousedown:preventDefault="true" type="button" class="bz-te__chip @(_image.Align == "start" ? "is-active" : "")"
+                                title="@(Fa ? "ابتدا" : "Start")" @onclick="@(() => SetImageAlign("start"))">
+                            <i class="fa-solid fa-align-@(Rtl ? "right" : "left")"></i>
+                        </button>
+                        <button @onmousedown:preventDefault="true" type="button" class="bz-te__chip @(_image.Align == "center" ? "is-active" : "")"
+                                title="@(Fa ? "وسط" : "Centre")" @onclick="@(() => SetImageAlign("center"))">
+                            <i class="fa-solid fa-align-center"></i>
+                        </button>
+                        <button @onmousedown:preventDefault="true" type="button" class="bz-te__chip @(_image.Align == "end" ? "is-active" : "")"
+                                title="@(Fa ? "انتها" : "End")" @onclick="@(() => SetImageAlign("end"))">
+                            <i class="fa-solid fa-align-@(Rtl ? "left" : "right")"></i>
+                        </button>
+                        <button @onmousedown:preventDefault="true" type="button" class="bz-te__chip @(_image.Align is null or "none" ? "is-active" : "")"
+                                title="@(Fa ? "درون متن" : "Inline")" @onclick="@(() => SetImageAlign("none"))">
+                            <i class="fa-solid fa-i-cursor"></i>
+                        </button>
+                    </div>
+
+                    <div class="bz-te__imgbar-group bz-te__imgbar-group--grow">
+                        <input class="bz-te__imgbar-input" placeholder="@(Fa ? "متن جایگزین (alt)" : "Alt text")"
+                               value="@_image.Alt" @onchange="@(async e => { _image.Alt = e.Value?.ToString(); await ApplyImageProps(); })" />
+                        <input class="bz-te__imgbar-input" placeholder="@(Fa ? "توضیح زیر تصویر" : "Caption")"
+                               value="@_image.Caption" @onchange="@(async e => { _image.Caption = e.Value?.ToString(); await ApplyImageProps(); })" />
+                    </div>
+
+                    <button @onmousedown:preventDefault="true" type="button" class="bz-te__chip bz-te__chip--danger" title="@(Fa ? "حذف" : "Remove")"
+                            @onclick="RemoveImage">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            }
+
+            @* ---------------- status bar ---------------- *@
+            @if (ShowStatusBar)
+            {
+                <div class="bz-te__status">
+                    <span>@(Fa ? "کلمات" : "Words"): <b>@_state.Words</b></span>
+                    <span>
+                        @(Fa ? "نویسه ها" : "Characters"):
+                        <b class="@(OverLimit ? "bz-te__over" : "")">@_state.Chars</b>@if (MaxLength.HasValue)
+                        {
+                            <text> / @MaxLength.Value</text>
+                        }
+                    </span>
+                    @if (_state.Dir is not null)
+                    {
+                        <span class="bz-te__status-dir">@_state.Dir.ToUpperInvariant()</span>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <p class="bz-te__error">@Error</p>
+        }
+        else if (!string.IsNullOrWhiteSpace(Hint))
+        {
+            <p class="bz-te__hint">@Hint</p>
+        }
+    </div>
+
+    @* ---------------- link dialog ---------------- *@
+    <BzDialog @bind-Open="_linkOpen" Title="@(Fa ? "افزودن پیوند" : "Insert link")"
+              Icon="fa-solid fa-link" Size="BzDialogSize.Small">
+        <ChildContent>
+            <div class="bz-te__dialog-body">
+                <BzInput TValue="string" @bind-Value="_linkUrl" Label="@(Fa ? "آدرس" : "URL")"
+                         Placeholder="https://example.com" StartIcon="fa-solid fa-globe" />
+                <BzInput TValue="string" @bind-Value="_linkText" Label="@(Fa ? "متن نمایشی" : "Text")"
+                         Placeholder="@(Fa ? "اختیاری" : "Optional")" />
+                <BzCheckbox @bind-Value="_linkNewTab" Label="@(Fa ? "باز شدن در تب جدید" : "Open in a new tab")" />
+            </div>
+        </ChildContent>
+        <FooterContent>
+            <BzButton Variant="BzButtonVariant.Text" Text="@(Fa ? "انصراف" : "Cancel")"
+                      OnClick="@(() => _linkOpen = false)" />
+            <BzButton Color="BzColor.Primary" Text="@(Fa ? "افزودن" : "Insert")" OnClick="ConfirmLink" />
+        </FooterContent>
+    </BzDialog>
+
+    @* ---------------- image dialog ---------------- *@
+    <BzDialog @bind-Open="_imageOpen" Title="@(Fa ? "افزودن تصویر" : "Insert image")"
+              Icon="fa-solid fa-image" Size="BzDialogSize.Small">
+        <ChildContent>
+            <div class="bz-te__dialog-body">
+                <label class="bz-te__drop">
+                    <InputFile OnChange="OnImagePicked" accept="@ImageAccept" class="bz-te__file" />
+                    @if (_uploading)
+                    {
+                        <span class="bz-te__drop-spin"></span>
+                        <span>@(Fa ? "در حال بارگذاری…" : "Uploading…")</span>
+                    }
+                    else
+                    {
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>@(Fa ? "انتخاب تصویر از دستگاه" : "Choose an image")</span>
+                        <small>@(Fa ? $"حداکثر {MaxImageSizeMB} مگابایت" : $"Up to {MaxImageSizeMB} MB")</small>
+                    }
+                </label>
+
+                @if (!string.IsNullOrEmpty(_uploadError))
+                {
+                    <p class="bz-te__error">@_uploadError</p>
+                }
+
+                <div class="bz-te__or"><span>@(Fa ? "یا" : "or")</span></div>
+
+                <BzInput TValue="string" @bind-Value="_imageUrl" Label="@(Fa ? "آدرس تصویر" : "Image URL")"
+                         Placeholder="https://…" StartIcon="fa-solid fa-link" />
+                <BzInput TValue="string" @bind-Value="_imageAlt" Label="@(Fa ? "متن جایگزین" : "Alt text")" />
+            </div>
+        </ChildContent>
+        <FooterContent>
+            <BzButton Variant="BzButtonVariant.Text" Text="@(Fa ? "انصراف" : "Cancel")"
+                      OnClick="@(() => _imageOpen = false)" />
+            <BzButton Color="BzColor.Primary" Text="@(Fa ? "افزودن" : "Insert")" OnClick="ConfirmImageUrl" />
+        </FooterContent>
+    </BzDialog>
+
+    @* ---------------- table dialog ---------------- *@
+    <BzDialog @bind-Open="_tableOpen" Title="@(Fa ? "افزودن جدول" : "Insert table")"
+              Icon="fa-solid fa-table" Size="BzDialogSize.Small">
+        <ChildContent>
+            <div class="bz-te__dialog-body">
+                <BzInput TValue="int" @bind-Value="_tableRows" Label="@(Fa ? "تعداد سطر" : "Rows")" />
+                <BzInput TValue="int" @bind-Value="_tableCols" Label="@(Fa ? "تعداد ستون" : "Columns")" />
+                <BzCheckbox @bind-Value="_tableHeader" Label="@(Fa ? "سطر اول هدر باشد" : "First row is a header")" />
+            </div>
+        </ChildContent>
+        <FooterContent>
+            <BzButton Variant="BzButtonVariant.Text" Text="@(Fa ? "انصراف" : "Cancel")"
+                      OnClick="@(() => _tableOpen = false)" />
+            <BzButton Color="BzColor.Primary" Text="@(Fa ? "افزودن" : "Insert")" OnClick="ConfirmTable" />
+        </FooterContent>
+    </BzDialog>
+}
+
+@code {
+    private (string tag, string label)[] Blocks => new[]
+    {
+        ("p", Fa ? "متن معمولی" : "Paragraph"),
+        ("h1", Fa ? "عنوان 1" : "Heading 1"),
+        ("h2", Fa ? "عنوان 2" : "Heading 2"),
+        ("h3", Fa ? "عنوان 3" : "Heading 3"),
+        ("h4", Fa ? "عنوان 4" : "Heading 4"),
+        ("h5", Fa ? "عنوان 5" : "Heading 5"),
+        ("h6", Fa ? "عنوان 6" : "Heading 6"),
+    };
+
+    private string BlockLabel(string? tag) =>
+        Blocks.FirstOrDefault(b => b.tag == (tag ?? "p")).label ?? (Fa ? "متن معمولی" : "Paragraph");
+}

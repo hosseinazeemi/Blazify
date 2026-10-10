@@ -1,0 +1,30 @@
+@namespace BzCore.Components.Navigation
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <aside class="@RootClass" style="@RootStyleStr" id="@Id">
+        <div class="bz-sidebar__header">
+            <div class="bz-sidebar__header-content">
+                @HeaderContent
+            </div>
+            @if (ShowToggle)
+            {
+                <button type="button" class="bz-sidebar__toggle" @onclick="ToggleAsync" aria-label="باز/بستن">
+                    <i class="fa-solid @(Collapsed ? "fa-angle-left" : "fa-angle-right")"></i>
+                </button>
+            }
+        </div>
+
+        <nav class="bz-sidebar__body">
+            <CascadingValue Value="this" IsFixed="true">
+                @ChildContent
+            </CascadingValue>
+        </nav>
+
+        @if (FooterContent is not null)
+        {
+            <div class="bz-sidebar__footer">@FooterContent</div>
+        }
+    </aside>
+}

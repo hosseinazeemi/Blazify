@@ -1,0 +1,91 @@
+@namespace BzCore.Components.Navigation
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <div class="bz-fab bz-fab--@(Position.ToString().ToLowerInvariant()) @Class"
+         style="@RootStyle()"
+         id="@Id">
+        @if (_open)
+        {
+            <div class="bz-fab__panel">
+                @if (!string.IsNullOrEmpty(Title))
+                {
+                    <div class="bz-fab__panel-header">
+                        <span>@Title</span>
+                        <button type="button"
+                                class="bz-fab__close"
+                                @onclick="Close">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                }
+
+                <div class="bz-fab__panel-body">@ChildContent</div>
+            </div>
+        }
+
+        <button type="button"
+                class="bz-fab__btn @(_open ? "is-open" : "")"
+                @onclick="Toggle"
+                aria-label="@(Title ?? "منو")">
+            <i class="@(_open && !string.IsNullOrEmpty(OpenIcon) ? OpenIcon : Icon)"></i>
+        </button>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public string Icon { get; set; } = "fa-solid fa-plus";
+
+    [Parameter]
+    public string? OpenIcon { get; set; } = "fa-solid fa-xmark";
+
+    [Parameter]
+    public string? Title { get; set; }
+
+    [Parameter]
+    public BzFloatingPosition Position { get; set; } = BzFloatingPosition.BottomEnd;
+
+    [Parameter]
+    public bool Open { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    private bool _open;
+    private bool _last;
+
+    protected override void OnParametersSet()
+    {
+        if (Open != _last)
+        {
+            _last = Open;
+            _open = Open;
+        }
+    }
+
+    private async Task Set(bool v)
+    {
+        _open = v;
+        _last = v;
+
+        if (OpenChanged.HasDelegate)
+            await OpenChanged.InvokeAsync(v);
+
+        StateHasChanged();
+    }
+
+    private Task Toggle() => Set(!_open);
+
+    private Task Close() => Set(false);
+
+    public Task OpenAsync() => Set(true);
+
+    public Task CloseAsync() => Set(false);
+
+    public Task ToggleAsync() => Set(!_open);
+}

@@ -1,0 +1,133 @@
+@namespace BzCore.Components.DatePicker
+@inherits BzFieldBase<DateTime?>
+
+@if (Visible)
+{
+    <div class="@WrapperClass" style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="bz-dp__label">
+                @Label
+                @if (Required)
+                {
+                    <span class="bz-dp__req" aria-hidden="true">*</span>
+                }
+            </label>
+        }
+
+        <div class="bz-dp__field" @onclick="Toggle">
+            <i class="@(string.IsNullOrEmpty(StartIcon) ? "fa-regular fa-calendar" : StartIcon) bz-dp__icon"></i>
+
+            <span class="bz-dp__value @(string.IsNullOrEmpty(DisplayText) ? "is-placeholder" : "")">
+                @(string.IsNullOrEmpty(DisplayText) ? (Placeholder ?? "انتخاب تاریخ") : DisplayText)
+            </span>
+
+            @if (Clearable && Value is not null && !IsDisabled && !IsReadOnly)
+            {
+                <button type="button" class="bz-dp__clear" tabindex="-1"
+                        @onmousedown:preventDefault="true"
+                        @onclick:stopPropagation="true"
+                        @onclick="ClearAsync" aria-label="پاک کردن">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            }
+            <i class="fa-solid fa-chevron-down bz-dp__caret"></i>
+        </div>
+
+        @if (_open)
+        {
+            <div class="bz-dp__backdrop" @onclick="Close"></div>
+            <div class="bz-dp__panel">
+                <div class="bz-dp__header">
+                    <div class="bz-dp__nav">
+                        <button type="button" @onclick="@(() => HeaderNav(1))" title="بعدی"><i class="fa-solid fa-angles-right"></i></button>
+                        @if (_pick == PickMode.Days)
+                        {
+                            <button type="button" @onclick="@(() => Move(1))" title="ماه بعد"><i class="fa-solid fa-angle-right"></i></button>
+                        }
+                    </div>
+                    <button type="button" class="bz-dp__title bz-dp__title--btn" @onclick="HeaderClick">@HeaderTitle</button>
+                    <div class="bz-dp__nav">
+                        @if (_pick == PickMode.Days)
+                        {
+                            <button type="button" @onclick="@(() => Move(-1))" title="ماه قبل"><i class="fa-solid fa-angle-left"></i></button>
+                        }
+                        <button type="button" @onclick="@(() => HeaderNav(-1))" title="قبلی"><i class="fa-solid fa-angles-left"></i></button>
+                    </div>
+                </div>
+
+                @if (_pick == PickMode.Days)
+                {
+                    <div class="bz-dp__weekdays">
+                        @foreach (var w in BzCore.Helpers.CalendarHelper.WeekdayHeaders)
+                        {
+                            <span>@w</span>
+                        }
+                    </div>
+
+                    <div class="bz-dp__grid">
+                        @foreach (var dt in Grid)
+                        {
+                            var day = dt;
+                            <button type="button" class="@CellClass(day)"
+                                    disabled="@IsDisabledDate(day)"
+                                    @onclick="@(() => SelectAsync(day))">
+                                @DayLabel(day)
+                            </button>
+                        }
+                    </div>
+                }
+                else if (_pick == PickMode.Months)
+                {
+                    <div class="bz-dp__picker-grid bz-dp__picker-grid--months">
+                        @for (var m = 1; m <= 12; m++)
+                        {
+                            var mm = m;
+                            <button type="button" class="bz-dp__pick-cell @(mm == _viewMonth ? "is-active" : "")"
+                                    @onclick="@(() => PickMonth(mm))">
+                                @MonthLabel(mm)
+                            </button>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="bz-dp__picker-grid bz-dp__picker-grid--years">
+                        @foreach (var y in YearGrid)
+                        {
+                            var yy = y;
+                            <button type="button" class="bz-dp__pick-cell @(yy == _viewYear ? "is-active" : "")"
+                                    @onclick="@(() => PickYear(yy))">
+                                @YearLabel(yy)
+                            </button>
+                        }
+                    </div>
+                }
+
+                <div class="bz-dp__footer">
+                    <button type="button" class="bz-dp__chip" @onclick="SelectTodayAsync">امروز</button>
+
+                    @if (Range && AllowUntilFurtherNotice)
+                    {
+                        <button type="button"
+                                class="bz-dp__chip @(IsOpenEnded ? "is-on" : "")"
+                                @onclick="ToggleUntilFurtherNoticeAsync">
+                            <i class="fa-solid fa-infinity"></i> تا اطلاع ثانوی
+                        </button>
+                    }
+
+                    <button type="button" class="bz-dp__chip bz-dp__chip--ghost" @onclick="ClearAsync">پاک کردن</button>
+                </div>
+            </div>
+        }
+
+        @if (HasError)
+        {
+            <div class="bz-dp__msg bz-dp__msg--error">@ErrorText</div>
+        }
+        else if (!string.IsNullOrEmpty(HelperText))
+        {
+            <div class="bz-dp__msg">@HelperText</div>
+        }
+    </div>
+}

@@ -1,0 +1,55 @@
+@namespace BzCore.Components.Tabs
+@inherits BzComponentBase
+
+@*  BzTabs — renders the tab buttons and the active panel. <BzTab> children
+    register via the cascading value; selection logic is in BzTabs.razor.cs.  *@
+
+@* register tabs (no visible DOM) *@
+<CascadingValue Value="this" IsFixed="true">
+    @ChildContent
+</CascadingValue>
+
+@if (Visible)
+{
+    <div class="@RootClass" style="@RootStyle()" id="@Id">
+        <div class="bz-tabs__list" role="tablist">
+            @for (var i = 0; i < _tabs.Count; i++)
+            {
+                var idx = i;
+                var tab = _tabs[i];
+                <button type="button"
+                        class="bz-tabs__tab @(idx == ActiveIndex ? "is-active" : "") @(tab.Disabled ? "is-disabled" : "")"
+                        role="tab" aria-selected="@(idx == ActiveIndex)" disabled="@tab.Disabled"
+                        @onclick="@(() => SelectAsync(idx))">
+                    @if (!string.IsNullOrEmpty(tab.Icon))
+                    {
+                        <i class="@tab.Icon"></i>
+                    }
+                    <span>@tab.Title</span>
+                    @if (!string.IsNullOrEmpty(tab.Badge))
+                    {
+                        <span class="bz-tabs__badge">@tab.Badge</span>
+                    }
+                </button>
+            }
+        </div>
+
+        <div class="bz-tabs__panels">
+            @if (KeepAlive)
+            {
+                @for (var i = 0; i < _tabs.Count; i++)
+                {
+                    <div class="bz-tabs__panel @(i == ActiveIndex ? "is-active" : "")" role="tabpanel">
+                        @_tabs[i].ChildContent
+                    </div>
+                }
+            }
+            else if (ActiveIndex >= 0 && ActiveIndex < _tabs.Count)
+            {
+                <div class="bz-tabs__panel is-active" role="tabpanel" @key="ActiveIndex">
+                    @_tabs[ActiveIndex].ChildContent
+                </div>
+            }
+        </div>
+    </div>
+}

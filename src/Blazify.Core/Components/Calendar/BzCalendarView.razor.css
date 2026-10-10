@@ -1,0 +1,31 @@
+.bz-cal { font-family: var(--bz-font-family); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-lg); background: var(--bz-surface); padding: 1rem; width: 100%; max-width: 420px; }
+.bz-cal__head { display: flex; align-items: center; gap: .5rem; margin-bottom: .8rem; }
+.bz-cal__title { flex: 1 1 auto; text-align: center; font-weight: 700; color: var(--bz-text); }
+.bz-cal__nav { border: 1px solid var(--bz-border); background: var(--bz-surface); color: var(--bz-text); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; }
+.bz-cal__nav:hover { border-color: var(--bz-primary); color: var(--bz-primary); }
+.bz-cal__today { border: none; background: color-mix(in srgb, var(--bz-primary) 14%, transparent); color: var(--bz-primary); font-family: inherit; font-size: 12px; font-weight: 700; padding: .35rem .7rem; border-radius: 999px; cursor: pointer; }
+.bz-cal__weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 4px; }
+.bz-cal__weekdays span { text-align: center; font-size: 12px; color: var(--bz-text-muted); font-weight: 700; padding: .35rem 0; }
+.bz-cal__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.bz-cal__cell { position: relative; aspect-ratio: 1; border: none; background: transparent; cursor: pointer; border-radius: var(--bz-radius); color: var(--bz-text); font-family: inherit; font-size: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; transition: background var(--bz-transition-fast); }
+.bz-cal__cell:hover { background: var(--bz-surface-muted); }
+.bz-cal__cell.is-out { color: var(--bz-text-muted); opacity: .4; }
+.bz-cal__cell.is-today { box-shadow: inset 0 0 0 1.5px var(--bz-primary); font-weight: 800; }
+.bz-cal__cell.is-sel { background: var(--bz-primary); color: var(--bz-on-primary); }
+.bz-cal__cell.is-holiday:not(.is-sel) { color: var(--bz-danger); }
+.bz-cal__dots { display: flex; gap: 2px; }
+.bz-cal__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--bz-primary); }
+.bz-cal__dot--success { background: var(--bz-success); } .bz-cal__dot--warning { background: var(--bz-warning); }
+.bz-cal__dot--danger { background: var(--bz-danger); } .bz-cal__dot--info { background: var(--bz-info); }
+.bz-cal__cell.is-sel .bz-cal__dot { background: var(--bz-on-primary); }
+.bz-cal__events { margin-top: .9rem; border-top: 1px solid var(--bz-border); padding-top: .8rem; display: flex; flex-direction: column; gap: .5rem; }
+.bz-cal__event { display: flex; align-items: center; gap: .5rem; font-size: 13.5px; color: var(--bz-text); }
+
+/* clickable title + month/year quick-pick */
+.bz-cal__title--btn { background: none; border: none; cursor: pointer; font: inherit; font-weight: 700; color: var(--bz-text); padding: .2rem .7rem; border-radius: var(--bz-radius-sm, 6px); }
+.bz-cal__title--btn:hover { background: color-mix(in srgb, var(--bz-primary) 12%, transparent); color: var(--bz-primary); }
+.bz-cal__pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; padding: .75rem; }
+.bz-cal__pick--years { grid-template-columns: repeat(4, 1fr); }
+.bz-cal__pick-cell { padding: .7rem .3rem; border: 1px solid transparent; border-radius: var(--bz-radius, 8px); background: var(--bz-surface-muted); color: var(--bz-text); cursor: pointer; font: inherit; font-size: 13px; transition: background var(--bz-transition-fast), color var(--bz-transition-fast); }
+.bz-cal__pick-cell:hover { background: color-mix(in srgb, var(--bz-primary) 14%, transparent); color: var(--bz-primary); }
+.bz-cal__pick-cell.is-active { background: var(--bz-primary); color: var(--bz-on-primary, #fff); border-color: var(--bz-primary); }

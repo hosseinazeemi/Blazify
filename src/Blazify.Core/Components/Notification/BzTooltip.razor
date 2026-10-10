@@ -1,0 +1,33 @@
+@namespace BzCore.Components.Notification
+@inherits BzComponentBase
+
+@*  BzTooltip — wraps content and shows a hover/focus bubble. Placement and the
+    show/hide animation are pure CSS (see BzTooltip.razor.css).  *@
+
+@if (Visible)
+{
+    <span class="bz-tip bz-tip--@(Placement.ToString().ToLowerInvariant()) @Class" style="@RootStyle()" id="@Id">
+        @ChildContent
+        <span class="bz-tip__bubble" role="tooltip">
+            @if (ContentTemplate is not null)
+            {
+                @ContentTemplate
+            }
+            else
+            {
+                @Text
+            }
+        </span>
+    </span>
+}
+
+@code {
+    /// <summary>Tooltip text (used when no ContentTemplate is given).</summary>
+    [Parameter] public string? Text { get; set; }
+    /// <summary>Custom tooltip content.</summary>
+    [Parameter] public RenderFragment? ContentTemplate { get; set; }
+    /// <summary>The element the tooltip is attached to.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Where the bubble appears.</summary>
+    [Parameter] public BzTooltipPlacement Placement { get; set; } = BzTooltipPlacement.Top;
+}

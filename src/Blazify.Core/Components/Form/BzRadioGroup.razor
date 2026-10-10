@@ -1,0 +1,43 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+@typeparam TValue
+
+@if (Visible)
+{
+    <div class="bz-radio-group bz-radio-group--@(Orientation.ToString().ToLowerInvariant()) bz-radio-group--@(Color.ToString().ToLowerInvariant()) @(Card ? "bz-radio-group--card" : "") @Class"
+         style="@RootStyle()" id="@Id" role="radiogroup">
+        @foreach (var opt in Items)
+        {
+            var selected = EqualityComparer<TValue>.Default.Equals(Value, opt.Value);
+            <label class="bz-radio @(selected ? "is-on" : "") @(opt.Disabled ? "is-disabled" : "")">
+                <input type="radio" checked="@selected" disabled="@opt.Disabled"
+                       @onchange="@(() => Select(opt.Value))" />
+                <span class="bz-radio__dot"></span>
+                <span class="bz-radio__label">
+                    @if (!string.IsNullOrEmpty(opt.Icon)) { <i class="@opt.Icon"></i> }
+                    @opt.Label
+                </span>
+            </label>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public List<BzOption<TValue>> Items { get; set; } = new();
+    [Parameter] public TValue? Value { get; set; }
+    [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
+    [Parameter] public EventCallback<TValue?> OnChange { get; set; }
+    [Parameter] public BzOrientation Orientation { get; set; } = BzOrientation.Vertical;
+    [Parameter] public BzColor Color { get; set; } = BzColor.Primary;
+    /// <summary>
+    /// when true, all items like a Cardbox
+    /// </summary>
+    [Parameter] public bool Card { get; set; }
+
+    async Task Select(TValue v)
+    {
+        Value = v;
+        if (ValueChanged.HasDelegate) await ValueChanged.InvokeAsync(v);
+        if (OnChange.HasDelegate) await OnChange.InvokeAsync(v);
+    }
+}

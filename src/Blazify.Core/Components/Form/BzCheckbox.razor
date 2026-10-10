@@ -1,0 +1,36 @@
+@namespace BzCore.Components.Form
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <label class="bz-checkbox bz-checkbox--@(Color.ToString().ToLowerInvariant()) bz-checkbox--@(Shape.ToString().ToLowerInvariant()) @(Card ? "bz-checkbox--card" : "") @(Value ? "is-on" : "") @(Disabled ? "is-disabled" : "") @Class"
+           style="@RootStyle()" id="@Id">
+        <input type="checkbox" checked="@Value" disabled="@Disabled"
+               @onchange="OnToggle" class="bz-checkbox__box" />
+        <span class="bz-checkbox__mark"><i class="fa-solid fa-check"></i></span>
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <span class="bz-checkbox__label">@Label</span>
+        }
+        @ChildContent
+    </label>
+}
+
+@code {
+    [Parameter] public bool Value { get; set; }
+    [Parameter] public EventCallback<bool> ValueChanged { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public BzColor Color { get; set; } = BzColor.Primary;
+    [Parameter] public BzCheckShape Shape { get; set; } = BzCheckShape.Rounded;
+    [Parameter] public bool Card { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    async Task OnToggle(ChangeEventArgs e)
+    {
+        Value = (bool)(e.Value ?? false);
+        if (ValueChanged.HasDelegate) await ValueChanged.InvokeAsync(Value);
+        if (OnChange.HasDelegate) await OnChange.InvokeAsync(Value);
+    }
+}

@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+
+    <!-- ============ NuGet package metadata ============ -->
+    <PackageId>Blazify</PackageId>
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
+
+    <Title>Blazify — RTL-first Blazor component library</Title>
+    <Authors>Hossein Azimi</Authors>
+    <Company>Blazify</Company>
+    <Product>Blazify</Product>
+    <Description>Blazify is a modern, themeable, RTL-first Blazor UI component library for .NET 8 and .NET 10. It ships 50+ pure CSS/SVG components — data grid, inputs, date/time pickers, Jalali (Persian) calendar, dialogs, charts, navigation, forms and more — with first-class right-to-left support, Persian/Arabic/English localization, Tailwind-based theming and no heavy JS dependencies. Works with Blazor Server, WebAssembly and the unified Blazor Web App model.</Description>
+
+    <PackageTags>blazor;components;ui;ui-library;rtl;persian;jalali;farsi;datagrid;datepicker;razor;dotnet;blazor-server;blazor-webassembly;tailwind;design-system</PackageTags>
+    <PackageProjectUrl>https://blazify.ir</PackageProjectUrl>
+
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>First public release. 50+ RTL-first components, Jalali calendar, Tailwind-based theming, fa/en localization. Multi-targets .NET 8 and .NET 10.</PackageReleaseNotes>
+    <Copyright>Copyright (c) Blazify</Copyright>
+
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.0" />
+  </ItemGroup>
+
+  <!-- Files packed into the NuGet package -->
+  <ItemGroup>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" Condition="Exists('..\..\LICENSE')" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

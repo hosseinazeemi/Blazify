@@ -1,0 +1,173 @@
+/* ====================  BzSpinner (12 variants)  ==================== */
+.bz-sp {
+    --s: var(--bz-sp-size, 40px);
+    --c: var(--bz-sp-color, var(--bz-primary));
+    --sp: var(--bz-sp-speed, 1s);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    font-family: var(--bz-font-family);
+}
+.bz-sp__box {
+    width: var(--s);
+    height: var(--s);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.bz-sp__label { font-size: 12.5px; color: var(--bz-text-muted); }
+.bz-sp__content { position:relative; z-index:1; display:inline-flex; flex-direction:column; align-items:center; gap:.65rem; padding:.9rem 1.1rem; border-radius:var(--bz-radius-lg); }
+.bz-sp--fullscreen { position:fixed; inset:0; z-index:2147483000; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.bz-sp--fullscreen.bz-sp--blocking { pointer-events:auto; }
+.bz-sp--fullscreen .bz-sp__backdrop { position:absolute; inset:0; background:color-mix(in srgb,var(--bz-overlay,#000) 55%,transparent); backdrop-filter:blur(2px); }
+.bz-sp--fullscreen .bz-sp__content { background:color-mix(in srgb,var(--bz-surface,#fff) 94%,transparent); box-shadow:var(--bz-shadow-lg); border:1px solid var(--bz-border); }
+
+/* 1) Ring */
+.bz-sp__ring {
+    width: 100%; height: 100%; border-radius: 50%;
+    border: calc(var(--s) * .12) solid color-mix(in srgb, var(--c) 22%, transparent);
+    border-top-color: var(--c);
+    animation: bz-spin var(--sp) linear infinite;
+}
+
+/* 2) DualRing */
+.bz-sp__dualring {
+    width: 100%; height: 100%; border-radius: 50%;
+    border: calc(var(--s) * .1) solid transparent;
+    border-top-color: var(--c); border-bottom-color: var(--c);
+    animation: bz-spin var(--sp) cubic-bezier(.5,0,.5,1) infinite;
+}
+
+/* 3) Dots */
+.bz-sp__dots { display: inline-flex; gap: calc(var(--s) * .12); }
+.bz-sp__dots i {
+    width: calc(var(--s) * .22); height: calc(var(--s) * .22);
+    background: var(--c); border-radius: 50%;
+    animation: bz-bounce var(--sp) ease-in-out infinite;
+}
+.bz-sp__dots i:nth-child(2) { animation-delay: calc(var(--sp) * .16); }
+.bz-sp__dots i:nth-child(3) { animation-delay: calc(var(--sp) * .32); }
+
+/* 4) Bars (equalizer) */
+.bz-sp__bars { display: inline-flex; align-items: center; gap: calc(var(--s) * .08); height: 100%; }
+.bz-sp__bars i {
+    width: calc(var(--s) * .12); height: 100%;
+    background: var(--c); border-radius: 99px;
+    animation: bz-eq var(--sp) ease-in-out infinite;
+}
+.bz-sp__bars i:nth-child(2) { animation-delay: calc(var(--sp) * .1); }
+.bz-sp__bars i:nth-child(3) { animation-delay: calc(var(--sp) * .2); }
+.bz-sp__bars i:nth-child(4) { animation-delay: calc(var(--sp) * .3); }
+.bz-sp__bars i:nth-child(5) { animation-delay: calc(var(--sp) * .4); }
+@keyframes bz-eq { 0%,100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+
+/* 5) Pulse */
+.bz-sp__pulse {
+    width: 100%; height: 100%; border-radius: 50%; background: var(--c);
+    animation: bz-pulse var(--sp) ease-in-out infinite;
+}
+
+/* 6) Grid */
+.bz-sp__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--s) * .08); width: 100%; height: 100%; }
+.bz-sp__grid i { background: var(--c); border-radius: 2px; animation: bz-fade var(--sp) ease infinite; }
+.bz-sp__grid i:nth-child(1){animation-delay:0s}.bz-sp__grid i:nth-child(2){animation-delay:.1s}
+.bz-sp__grid i:nth-child(3){animation-delay:.2s}.bz-sp__grid i:nth-child(4){animation-delay:.1s}
+.bz-sp__grid i:nth-child(5){animation-delay:.2s}.bz-sp__grid i:nth-child(6){animation-delay:.3s}
+.bz-sp__grid i:nth-child(7){animation-delay:.2s}.bz-sp__grid i:nth-child(8){animation-delay:.3s}
+.bz-sp__grid i:nth-child(9){animation-delay:.4s}
+@keyframes bz-fade { 0%,70%,100% { opacity: .25; } 35% { opacity: 1; } }
+
+/* 7) Ripple */
+.bz-sp__ripple { position: relative; width: 100%; height: 100%; }
+.bz-sp__ripple i {
+    position: absolute; inset: 0; margin: auto; width: 0; height: 0;
+    border: calc(var(--s) * .06) solid var(--c); border-radius: 50%;
+    animation: bz-ripple-sp var(--sp) cubic-bezier(0,.2,.8,1) infinite;
+}
+.bz-sp__ripple i:nth-child(2) { animation-delay: calc(var(--sp) * -.5); }
+@keyframes bz-ripple-sp {
+    0% { width: 0; height: 0; opacity: 1; }
+    100% { width: 100%; height: 100%; opacity: 0; }
+}
+
+/* 8) Ellipsis */
+.bz-sp__ellipsis { position: relative; width: 100%; height: 100%; }
+.bz-sp__ellipsis i {
+    position: absolute; top: 50%; width: calc(var(--s) * .2); height: calc(var(--s) * .2);
+    margin-top: calc(var(--s) * -.1); background: var(--c); border-radius: 50%;
+}
+.bz-sp__ellipsis i:nth-child(1){left:6%;animation:bz-el-grow var(--sp) infinite}
+.bz-sp__ellipsis i:nth-child(2){left:6%;animation:bz-el-move var(--sp) infinite}
+.bz-sp__ellipsis i:nth-child(3){left:40%;animation:bz-el-move var(--sp) infinite}
+.bz-sp__ellipsis i:nth-child(4){left:74%;animation:bz-el-shrink var(--sp) infinite}
+@keyframes bz-el-grow { from { transform: scale(0);} to { transform: scale(1);} }
+@keyframes bz-el-shrink { from { transform: scale(1);} to { transform: scale(0);} }
+@keyframes bz-el-move { from { transform: translateX(0);} to { transform: translateX(170%);} }
+
+/* 9) Roller */
+.bz-sp__roller { position: relative; width: 100%; height: 100%; animation: bz-spin calc(var(--sp) * 1.2) linear infinite; }
+.bz-sp__roller i { position: absolute; inset: 0; }
+.bz-sp__roller i::after {
+    content: ""; position: absolute; top: 4%; left: 50%;
+    width: calc(var(--s) * .12); height: calc(var(--s) * .12);
+    margin-left: calc(var(--s) * -.06); border-radius: 50%; background: var(--c);
+}
+.bz-sp__roller i:nth-child(1){transform:rotate(0deg);opacity:1}
+.bz-sp__roller i:nth-child(2){transform:rotate(45deg);opacity:.87}
+.bz-sp__roller i:nth-child(3){transform:rotate(90deg);opacity:.75}
+.bz-sp__roller i:nth-child(4){transform:rotate(135deg);opacity:.62}
+.bz-sp__roller i:nth-child(5){transform:rotate(180deg);opacity:.5}
+.bz-sp__roller i:nth-child(6){transform:rotate(225deg);opacity:.37}
+.bz-sp__roller i:nth-child(7){transform:rotate(270deg);opacity:.25}
+.bz-sp__roller i:nth-child(8){transform:rotate(315deg);opacity:.12}
+
+/* 10) Wave */
+.bz-sp__wave { display: inline-flex; align-items: center; gap: calc(var(--s) * .07); height: 100%; }
+.bz-sp__wave i {
+    width: calc(var(--s) * .1); height: 100%; background: var(--c); border-radius: 99px;
+    animation: bz-wave var(--sp) ease-in-out infinite;
+}
+.bz-sp__wave i:nth-child(1){animation-delay:0s}.bz-sp__wave i:nth-child(2){animation-delay:.1s}
+.bz-sp__wave i:nth-child(3){animation-delay:.2s}.bz-sp__wave i:nth-child(4){animation-delay:.3s}
+.bz-sp__wave i:nth-child(5){animation-delay:.4s}
+@keyframes bz-wave { 0%,40%,100% { transform: scaleY(.4);} 20% { transform: scaleY(1);} }
+
+/* 11) Orbit */
+.bz-sp__orbit {
+    position: relative; width: 100%; height: 100%; border-radius: 50%;
+    border: calc(var(--s) * .05) solid color-mix(in srgb, var(--c) 18%, transparent);
+    animation: bz-spin var(--sp) linear infinite;
+}
+.bz-sp__orbit i {
+    position: absolute; top: -6%; left: 50%; width: calc(var(--s) * .2); height: calc(var(--s) * .2);
+    margin-left: calc(var(--s) * -.1); background: var(--c); border-radius: 50%;
+}
+
+/* 12) Clock (12 fading spokes) */
+.bz-sp__clock { position: relative; width: 100%; height: 100%; }
+.bz-sp__clock i { position: absolute; inset: 0; animation: bz-clock calc(var(--sp) * 1.2) linear infinite; }
+.bz-sp__clock i::after {
+    content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: calc(var(--s) * .08); height: calc(var(--s) * .26);
+    border-radius: 99px; background: var(--c);
+}
+.bz-sp__clock i:nth-child(1){transform:rotate(0deg);animation-delay:calc(var(--sp)/-12*12)}
+.bz-sp__clock i:nth-child(2){transform:rotate(30deg);animation-delay:calc(var(--sp)/-12*11)}
+.bz-sp__clock i:nth-child(3){transform:rotate(60deg);animation-delay:calc(var(--sp)/-12*10)}
+.bz-sp__clock i:nth-child(4){transform:rotate(90deg);animation-delay:calc(var(--sp)/-12*9)}
+.bz-sp__clock i:nth-child(5){transform:rotate(120deg);animation-delay:calc(var(--sp)/-12*8)}
+.bz-sp__clock i:nth-child(6){transform:rotate(150deg);animation-delay:calc(var(--sp)/-12*7)}
+.bz-sp__clock i:nth-child(7){transform:rotate(180deg);animation-delay:calc(var(--sp)/-12*6)}
+.bz-sp__clock i:nth-child(8){transform:rotate(210deg);animation-delay:calc(var(--sp)/-12*5)}
+.bz-sp__clock i:nth-child(9){transform:rotate(240deg);animation-delay:calc(var(--sp)/-12*4)}
+.bz-sp__clock i:nth-child(10){transform:rotate(270deg);animation-delay:calc(var(--sp)/-12*3)}
+.bz-sp__clock i:nth-child(11){transform:rotate(300deg);animation-delay:calc(var(--sp)/-12*2)}
+.bz-sp__clock i:nth-child(12){transform:rotate(330deg);animation-delay:calc(var(--sp)/-12*1)}
+@keyframes bz-clock { 0% { opacity: 1; } 100% { opacity: .15; } }
+
+/* shared keyframes */
+@keyframes bz-spin { to { transform: rotate(360deg); } }
+@keyframes bz-bounce { 0%,80%,100% { transform: scale(.4); opacity:.5;} 40% { transform: scale(1); opacity:1;} }
+@keyframes bz-pulse { 0%,100% { transform: scale(.4); opacity:.4;} 50% { transform: scale(1); opacity:1;} }

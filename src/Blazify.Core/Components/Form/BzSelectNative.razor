@@ -1,0 +1,94 @@
+@namespace BzCore.Components.Form
+@typeparam TItem
+@typeparam TValue
+@inherits BzComponentBase
+@using System.Globalization
+@using System.Reflection
+
+@if (Visible)
+{
+    <div class="@RootCss("bz-select bz-select-native").Build()" style="@RootStyle()" id="@Id">
+        @if (!string.IsNullOrWhiteSpace(Label))
+        {
+            <label class="bz-select__label" for="@($"{Id}-control")">@Label</label>
+        }
+        <select id="@($"{Id}-control")" class="bz-select__control" disabled="@Disabled"
+                value="@SerializedValue" @onchange="ChangeAsync" @attributes="ControlAttributes">
+            @if (!string.IsNullOrEmpty(Placeholder))
+            {
+                <option value="" disabled="@(!Clearable)">@Placeholder</option>
+            }
+            @foreach (var item in Items ?? Enumerable.Empty<TItem>())
+            {
+                var key = GetProperty(item, KeyName);
+                <option value="@Serialize(key)" disabled="@IsItemDisabled(item)">@GetDisplay(item)</option>
+            }
+        </select>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<TItem>? Items { get; set; }
+    /// <summary>Property used as the option value.</summary>
+    [Parameter, EditorRequired] public string KeyName { get; set; } = string.Empty;
+    /// <summary>Property shown as the option text.</summary>
+    [Parameter, EditorRequired] public string ValueName { get; set; } = string.Empty;
+    [Parameter] public string? DisabledName { get; set; }
+    [Parameter] public TValue? Value { get; set; }
+    [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
+    [Parameter] public EventCallback<TItem?> SelectedItemChanged { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "انتخاب کنید…";
+    [Parameter] public bool Clearable { get; set; } = true;
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public Func<TItem, string>? DisplaySelector { get; set; }
+    [Parameter] public Func<TItem, TValue?>? ValueSelector { get; set; }
+
+    private IReadOnlyDictionary<string, object>? ControlAttributes
+    {
+        get
+        {
+            if (AdditionalAttributes is null) return null;
+            var copy = new Dictionary<string, object>(AdditionalAttributes);
+            copy.Remove("class"); copy.Remove("style");
+            return copy;
+        }
+    }
+
+    private string SerializedValue => Serialize(Value);
+    private static string Serialize(object? value) => Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+    private object? GetProperty(TItem item, string name)
+    {
+        var property = typeof(TItem).GetProperty(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)
+            ?? throw new InvalidOperationException($"Property '{name}' was not found on {typeof(TItem).Name}.");
+        return property.GetValue(item);
+    }
+    private object? GetKey(TItem item) => ValueSelector is null ? GetProperty(item, KeyName) : ValueSelector(item);
+    private string GetDisplay(TItem item) => DisplaySelector?.Invoke(item) ?? Serialize(GetProperty(item, ValueName));
+    private bool IsItemDisabled(TItem item) => !string.IsNullOrWhiteSpace(DisabledName) && GetProperty(item, DisabledName) is true;
+
+    private async Task ChangeAsync(ChangeEventArgs args)
+    {
+        var raw = args.Value?.ToString() ?? string.Empty;
+        var selected = default(TItem);
+        var found = false;
+        foreach (var item in Items ?? Enumerable.Empty<TItem>())
+        {
+            if (Serialize(GetKey(item)) != raw) continue;
+            selected = item; found = true; break;
+        }
+        TValue? next = found ? ConvertValue(GetKey(selected!)) : default;
+        Value = next;
+        await ValueChanged.InvokeAsync(next);
+        await SelectedItemChanged.InvokeAsync(found ? selected : default);
+    }
+
+    private static TValue? ConvertValue(object? value)
+    {
+        if (value is null) return default;
+        if (value is TValue typed) return typed;
+        var target = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
+        if (target.IsEnum) return (TValue)Enum.Parse(target, value.ToString()!, true);
+        return (TValue?)Convert.ChangeType(value, target, CultureInfo.InvariantCulture);
+    }
+}

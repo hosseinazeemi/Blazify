@@ -1,0 +1,69 @@
+﻿@namespace BzCore.Theming
+@inherits ComponentBase
+@implements IDisposable
+@inject IBzThemeService Theme
+@inject IJSRuntime JS
+
+<div class="bz-scope @AppearanceClass @ThemeClass @(Theme.Dense ? "bz-dense" : null)"
+     dir="@DirAttr"
+     style="@Theme.BuildCssVariables()"
+     id="bz-root">
+    <CascadingValue Value="this" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string DirAttr => Theme.Direction == Enums.BzDirection.Rtl ? "rtl" : "ltr";
+    private string AppearanceClass => $"bz-appearance-{Theme.Appearance.ToString().ToLowerInvariant()}";
+    private string ThemeClass => $"bz-theme-{Theme.Theme.Name}";
+
+    protected override void OnInitialized() => Theme.Changed += OnChanged;
+
+    private bool _jsReady;
+
+    protected override async Task OnAfterRenderAsync(bool first)
+    {
+        if (!first) return;
+        try
+        {
+            var s = await JS.InvokeAsync<ThemeStore>("bzThemeStore.load");
+            if (s is not null)
+            {
+                if (Enum.TryParse<Enums.BzThemeKind>(s.Kind, true, out var k)) Theme.SetTheme(k);
+                if (Enum.TryParse<Enums.BzAppearance>(s.Appearance, true, out var a)) Theme.SetAppearance(a);
+                if (Enum.TryParse<Enums.BzDirection>(s.Direction, true, out var d)) Theme.SetDirection(d);
+            }
+        }
+        catch { }
+        _jsReady = true;
+        await SaveAsync();
+    }
+
+    private async void OnChanged()
+    {
+        await InvokeAsync(StateHasChanged);
+        if (_jsReady) await SaveAsync();
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("bzThemeStore.save",
+                Theme.Kind.ToString(), Theme.Appearance.ToString(), Theme.Direction.ToString());
+        }
+        catch { }
+    }
+
+    public void Dispose() => Theme.Changed -= OnChanged;
+
+    private sealed class ThemeStore
+    {
+        public string? Kind { get; set; }
+        public string? Appearance { get; set; }
+        public string? Direction { get; set; }
+    }
+}

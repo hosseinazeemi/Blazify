@@ -1,0 +1,34 @@
+@namespace BzCore.Components.Display
+@inherits BzComponentBase
+
+@if (Visible)
+{
+    <span class="@RootClass" style="@RootStyle()" id="@Id">
+        @if (Variant == BzBadgeVariant.Dot)
+        {
+            <span class="bz-badge__dot"></span>
+        }
+        else
+        {
+            @if (!string.IsNullOrEmpty(Icon)) { <i class="@Icon"></i> }
+            @if (!string.IsNullOrEmpty(Text)) { <span>@Text</span> }
+            @ChildContent
+        }
+    </span>
+}
+
+@code {
+    [Parameter] public string? Text { get; set; }
+
+    [Parameter] public string? Icon { get; set; }
+
+    [Parameter] public BzBadgeVariant Variant { get; set; } = BzBadgeVariant.Solid;
+
+    [Parameter] public BzColor Color { get; set; } = BzColor.Primary;
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string RootClass =>
+        $"bz-badge bz-badge--{Variant.ToString().ToLowerInvariant()} " +
+        $"bz-badge--{Color.ToString().ToLowerInvariant()} {Class}";
+}
